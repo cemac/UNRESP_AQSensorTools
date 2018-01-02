@@ -1,0 +1,55 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage[T1]{fontenc}
+\renewcommand\labelitemii{$\circ$}
+\title{UNRESP: User Guide to Online Map Creation Tool}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+This document describes the process behind the creation of online concentration maps for the UNRESP project.
+
+\section{Files}
+The input files required to generate a map are:
+\begin{itemize}
+\item \textbf{xy\_masaya.dat} -- An ASCII file with two space-separated columns of data (no header) containing the projected x and y coordinates (UTM, km, zone P16) of the computational grid used by CALPUFF.
+\item \textbf{concrec******.dat} -- One or more single-column ASCII file(s) (no header) containing the SO2 concentrations (ug/cm3) output by CALPUFF at each grid point (in the same order as the x,y data file).
+\end{itemize}
+
+\section{Python script}
+The masaya\_conc.py script is currently hard-coded to read in a set of input files stored under my (JON) personal home directory. Eventually, this will be changed to read in the input data files specified as arguments from the command line when executing the script.\\\\
+The script requires a certain number python packages to be imported, including gmplot, utm and numpy. If any of these packages are missing on the host computer, the script will currently fail. I (JON) eventually plan to use PyInstaller (or equivalent) to generate an executable from the python script that can then be passed around without any additional dependencies. I also plan to ask UoL IT to add these packages to the loadable python modules.\\\\
+Running the script successfully will generate the following files in the current directory:
+\begin{itemize}
+\item an .html file with the name convention map\_concrec******.html, where ****** corresponds to the name of the processed concrec file. The .html file displays an interactive google map with the processed concentration data overlain.
+\item A static image (.png) file with the same name convention, which includes a colour bar.
+\end{itemize}
+The python script works in the following way:
+\begin{itemize}
+\item The spatial data file (xy\_masaya.dat) is read in, and converted to lat/lon using the utm package.
+\item The concentration data file(s) are then read in and stored into appropriately sized arrays
+\item Any concentrations under 20 ug/m3 are ‘masked’ so that they will appear transparent in the plot
+\item The concentration data are then ‘binned’ using the following limits:
+\begin{itemize}
+\item C < 20 (ug/m3)
+\item 20 < C < 350
+\item 350 < C < 600
+\item 600 < C < 2600
+\item 2600 < C < 9000
+\item 9000 < C < 14000
+\item C > 14000
+\end{itemize}
+Each bin is assigned a different colour from the discrete colour bar, which falls in line with the limits as shown on this webpage: \url{http://homepages.see.leeds.ac.uk/~earunres/masayaSO2.html}.
+\item The pcolormesh tool from matplotlib is used to create the static png image.
+\item The gmplot.GoogleMapPlotter function is then used to plot each concentration data point onto the background map using the appropriate lat/lon values and colour. Currently they are plotted as cell-centred non-overlapping squares.
+\end{itemize}
+
+
+
+\end{document}
