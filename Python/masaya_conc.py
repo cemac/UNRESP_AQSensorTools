@@ -20,7 +20,7 @@ parser.add_argument("concFile", help="absolute/relative path to concrec data fil
 args = parser.parse_args()
 assert os.path.exists(args.concFile), "concrec data file not found. Check path."
 concFile=args.concFile
-#concFile='/nfs/see-fs-01_users/earjjo/UNRESP/Data/20171030/concrec010001.dat'
+#concFile='/nfs/see-fs-01_users/earjjo/Data/concrec010001.dat'
 
 scriptPath=os.path.dirname(os.path.realpath(__file__))
 

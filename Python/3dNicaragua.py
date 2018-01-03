@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+@author: earjjo
+"""
 from mpl_toolkits.basemap import Basemap
 import numpy as np
 import matplotlib.pyplot as plt
@@ -6,10 +11,18 @@ from matplotlib import cm
 import matplotlib as mpl
 import utm
 import os
+import argparse
 
-root=os.environ['HOME']+'/UNRESP'
+###Read in command line arguments:
+parser = argparse.ArgumentParser()
+parser.add_argument("demFile", help="absolute/relative path to DEM data file",type=str)
+args = parser.parse_args()
+assert os.path.exists(args.demFile), "DEM data file not found. Check path."
+demFile=args.demFile
+#demFile='/nfs/see-fs-01_users/earjjo/Data/unresp.txt'
+
 #read in DEM data:
-f=open(root+'/Data/unresp.txt','r')
+f=open(demFile,'r')
 lines=f.read().splitlines()
 f.close()
 ###Pasted metadata:
@@ -46,18 +59,18 @@ dem0[dem0 == NODATA_value] = 0
 #x,y data:
 x = np.linspace(start=xllcorner,stop=xllcorner+(ncols-1)*cellsize,num=ncols)
 y = np.linspace(start=yllcorner+(nrows-1)*cellsize,stop=yllcorner,num=nrows)
-#xgrd,ygrd = np.meshgrid(x,y)
+xgrd,ygrd = np.meshgrid(x,y)
 #lat,lon data:
-#lat = np.zeros(shape=(nrows,ncols))
-#lon = np.zeros(shape=(nrows,ncols))
-#for i,xv in enumerate(x):
-#    for j,yv in enumerate(y):
-#        lat[j,i] = utm.to_latlon(xv,yv,16,'P')[0]
-#        lon[j,i] = utm.to_latlon(xv,yv,16,'P')[1]
-#np.save(root+'Data/lats',lat)
-#np.save(root+'Data/lons',lon)
-lat = np.load(root+'/Data/lats.npy')
-lon = np.load(root+'/Data/lons.npy')
+lat = np.zeros(shape=(nrows,ncols))
+lon = np.zeros(shape=(nrows,ncols))
+for i,xv in enumerate(x):
+    for j,yv in enumerate(y):
+        lat[j,i] = utm.to_latlon(xv,yv,16,'P')[0]
+        lon[j,i] = utm.to_latlon(xv,yv,16,'P')[1]
+#np.save('/nfs/see-fs-01_users/earjjo/Data/lats',lat)
+#np.save('/nfs/see-fs-01_users/earjjo/Data/lons',lon)
+#lat = np.load('/nfs/see-fs-01_users/earjjo/Data/lats.npy')
+#lon = np.load('/nfs/see-fs-01_users/earjjo/Data/lons.npy')
 
 #color bar:
 mycmap=cm.terrain
@@ -69,7 +82,7 @@ mynorm = mpl.colors.Normalize(0.001,np.max(dem0))
 #plt.pcolormesh(lon,lat,dem0,cmap=mycmap,norm=mynorm)
 #plt.show()
 
-#Plot wireframe on top of basemap:
+#Plot surface on top of basemap:
 mymap = Basemap(llcrnrlon=np.amin(lon),llcrnrlat=np.amin(lat),
             urcrnrlon=np.amax(lon),urcrnrlat=np.amax(lat),
             resolution='h',projection='tmerc',lat_0=0,lon_0=-90)
