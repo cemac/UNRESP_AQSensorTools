@@ -31,7 +31,7 @@ where:
 \end{itemize}
 
 \subsubsection{Dependencies}
-The script assumes that the data file `xy\_masaya.dat' is in a sub-directory named 'Data' located directly above the directory containing the python script itself (in line with the directory structure of the git repository). This is an ASCII file with two space-separated columns of data (no header) containing the projected x and y coordinates (unit: km; projection: UTM zone P16) of the computational grid used by CALPUFF.\\\\
+The script assumes that the data file `xy\_masaya.dat' is in a sub-directory named 'Data' located directly above the directory containing the python script itself (in line with the directory structure of the git repository). This is an ASCII file with two space-separated columns of data (no header) containing the projected x and y coordinates (units: km; projection: UTM zone P16) of the computational grid used by CALPUFF.\\\\
 The script also requires a number of external python packages to be imported. CEMAC periodically asks faculty (FoE) IT suppurt at the University of Leeds to add any required packaes to the loadable python/python-libs modules. Any faculty member should therefore be able to access the required packages by typing the following into the UNIX command line:\\\\
 \tab \texttt{\$ module load python3}\\
 \tab \texttt{\$ module load python-libs}\\\\
@@ -63,6 +63,44 @@ Each bin is assigned a different colour from the discrete colour bar, which repl
 \item The matplotlib package is used to create the static png image.
 \item The gmplot package is used to create the interactive Google map plot. Each concentration data point is plotted as a cell-centred non-overlapping square using the appropriate lat/lon values and bin colour.
 \end{itemize}
+
+
+
+\subsection{3dNicaragua.py}
+
+\subsubsection{Purpose}
+
+Used to generate a 3D topographic plot of the area around Masaya from DEM data.
+
+\subsubsection{Usage}
+The script should be run from a UNIX command line as follows:\\\\
+\tab \texttt{\$ python3 <py-path>/3dNicaragua.py <demFile>}\\\\
+where:
+\begin{itemize}
+\item \texttt{<py-path>} is the path (either relative to the current directory, or full) to the directory in which the python script is located (replace with “./” if it is in the current directory).
+\item \texttt{<demFile>} is the path (relative or full) to the DEM data file. This should be a tab delimited ASCII file with the 6 lines of metadata (ncols, nrows, xllcorner, yllcorner, cellsize, NODATA\_value) followed by a matrix of topographic heights (m) where the top-left/bottom-right heights correspond to the North-West/South-East corners of the area covered by the DEM data.
+\end{itemize}
+
+\subsubsection{Dependencies}
+The script requires a number of external python packages to be imported. CEMAC periodically asks faculty (FoE) IT suppurt at the University of Leeds to add any required packaes to the loadable python/python-libs modules. Any faculty member should therefore be able to access the required packages by typing the following into the UNIX command line:\\\\
+\tab \texttt{\$ module load python3}\\
+\tab \texttt{\$ module load python-libs}\\\\
+If the user still experiences any import errors when running the script, they should install the missing python packages themselves.
+
+\subsubsection{Output}
+Running the script successfully will launch the 3D plot in a separate window. The left and right mouse buttons can be used to rotate and zoom in/out of the plot, respectively.
+
+\subsubsection{Algorithm details}
+The python script works as follows:
+\begin{itemize}
+\item The DEM metadata is read in, and the lower left x and y coordinates, along with the cell size, is used to calculate the projected coordinates of each data point. These are then converted to lat/lon using the utm package, assuming a UTM zone P16 projected coordinate system (appropriate for the Masaya area of Nicaragua).
+\item The DEM height data are also read in, and any `NODATA' values (measurements taken over water) are replaced with zeros.
+\item The Basemap and matplotlib packages are used to plot the 3D data.
+\item The `stride' parameter is hard-coded to 100 but can be reduced to increase the resolution of the plot (takes longer to execute).
+\end{itemize}
+
+
+
 
 
 \end{document}

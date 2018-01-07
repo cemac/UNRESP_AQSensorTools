@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-@author: earjjo
+Script name: 3dNicaragua.py
+Author: JO'N
+Date: January 2018
+Purpose: Used to generate a 3D topographic plot of the area around Masaya from DEM data
+Usage: python 3dNicaragua.py <demFile>
+        <demFile> - Digital elevation model (DEM) data file
+Output: Launches plot in separate window.
 """
 from mpl_toolkits.basemap import Basemap
 import numpy as np
@@ -19,7 +25,7 @@ parser.add_argument("demFile", help="absolute/relative path to DEM data file",ty
 args = parser.parse_args()
 assert os.path.exists(args.demFile), "DEM data file not found. Check path."
 demFile=args.demFile
-#demFile='/nfs/see-fs-01_users/earjjo/Data/unresp.txt'
+#demFile=os.environ['HOME']+'Data/unresp.txt'
 
 #read in DEM data:
 f=open(demFile,'r')
@@ -40,7 +46,7 @@ f.close()
 #cellsize      91.301966063666
 #NODATA_value  -9999
 ###
-#read-in metadata:
+#read in metadata:
 ncols = int(lines[0].split()[1])
 nrows = int(lines[1].split()[1])
 xllcorner = float(lines[2].split()[1])
@@ -67,10 +73,10 @@ for i,xv in enumerate(x):
     for j,yv in enumerate(y):
         lat[j,i] = utm.to_latlon(xv,yv,16,'P')[0]
         lon[j,i] = utm.to_latlon(xv,yv,16,'P')[1]
-#np.save('/nfs/see-fs-01_users/earjjo/Data/lats',lat)
-#np.save('/nfs/see-fs-01_users/earjjo/Data/lons',lon)
-#lat = np.load('/nfs/see-fs-01_users/earjjo/Data/lats.npy')
-#lon = np.load('/nfs/see-fs-01_users/earjjo/Data/lons.npy')
+#np.save(os.environ['HOME']+'Data/lats',lat)
+#np.save(os.environ['HOME']+'Data/lons',lon)
+#lat = np.load(os.environ['HOME']+'Data/lats.npy')
+#lon = np.load(os.environ['HOME']+'Data/lons.npy')
 
 #color bar:
 mycmap=cm.terrain
