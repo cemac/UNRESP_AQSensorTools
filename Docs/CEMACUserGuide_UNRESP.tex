@@ -1,0 +1,68 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage[T1]{fontenc}
+\renewcommand\labelitemii{$\circ$}
+\newcommand\tab[1][0.5cm]{\hspace*{#1}}
+\title{CEMAC User Guide: UNRESP}
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Python scripts}
+
+\subsection{masaya\_conc.py}
+
+\subsubsection{Purpose}
+
+Used to generate an interactive Google map showing SO$_2$ concentrations around the Masaya volcano, for one output time, as predicted by the CALPUFF dispersion model.
+
+\subsubsection{Usage}
+The script should be run from a UNIX command line as follows:\\\\
+\tab \texttt{\$ python3 <py-path>/masaya\_conc.py <concFile>}\\\\
+where:
+\begin{itemize}
+\item \texttt{<py-path>} is the path (either relative to the current directory, or full) to the directory in which the python script is located (replace with “./” if it is in the current directory).
+\item \texttt{<concFile>} is the path (relative or full) to the CALPUFF output file, with naming convention 'concrec******.dat' (the asterisks are replaced by numbers). This should be a single-column ASCII file (no header) containing the SO$_2$ concentrations (ug/cm$^3$) at each grid point (with the same order as the coordinates in `xy\_masaya.dat', described further below) for a particular output time.
+\end{itemize}
+
+\subsubsection{Dependencies}
+The script assumes that the data file `xy\_masaya.dat' is in a sub-directory named 'Data' located directly above the directory containing the python script itself (in line with the directory structure of the git repository). This is an ASCII file with two space-separated columns of data (no header) containing the projected x and y coordinates (unit: km; projection: UTM zone P16) of the computational grid used by CALPUFF.\\\\
+The script also requires a number of external python packages to be imported. CEMAC periodically asks faculty (FoE) IT suppurt at the University of Leeds to add any required packaes to the loadable python/python-libs modules. Any faculty member should therefore be able to access the required packages by typing the following into the UNIX command line:\\\\
+\tab \texttt{\$ module load python3}\\
+\tab \texttt{\$ module load python-libs}\\\\
+If the user still experiences any import errors when running the script, they should install the missing python packages themselves.
+
+\subsubsection{Output}
+Running the script successfully will generate (in the current directory):
+\begin{itemize}
+\item \texttt{`map\_concrec******.png'} -- A static image file of the SO$_2$ plume (with no basemap).
+\item \texttt{`map\_concrec******.html'} -- An interactive webpage of the SO$_2$ plume (with a Google basemap).
+\end{itemize}
+
+\subsubsection{Algorithm details}
+The python script works as follows:
+\begin{itemize}
+\item The spatial data file (xy\_masaya.dat) is read in, and converted to lat/lon using the utm package.
+\item The concentration data file is then read in and stored into an appropriately sized 2D array.
+\item Any concentrations under 20 ug/m$^3$ are `masked' so that they will appear transparent in the plots. The other concentrations are `binned' using the following limits:
+\begin{itemize}
+\item $C \leq 20$ (ug/m$^3$)
+\item $20 < C \leq 350$
+\item $350 < C \leq 600$
+\item $600 < C \leq 2600$
+\item $2600 < C \leq 9000$
+\item $9000 < C \leq 14000$
+\item $C > 14000$
+\end{itemize}
+Each bin is assigned a different colour from the discrete colour bar, which replicates the limits as shown on \url{http://homepages.see.leeds.ac.uk/~earunres/masayaSO2.html}.
+\item The matplotlib package is used to create the static png image.
+\item The gmplot package is used to create the interactive Google map plot. Each concentration data point is plotted as a cell-centred non-overlapping square using the appropriate lat/lon values and bin colour.
+\end{itemize}
+
+
+\end{document}

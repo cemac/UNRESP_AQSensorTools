@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thu Dec 14 15:50:40 2017
-
-@author: earjjo
+Script name: masaya_conc.py
+Author: JO'N
+Date: January 2018
+Purpose: Used to generate an interactive Google map showing SO2 concentrations around the
+         Masaya volcano, for one output time, as predicted by the CALPUFF dispersion model
+Usage: python masaya_conc.py <concFile>
+        <concFile> - CALPUFF SO2 output file with naming convention 'concrec******.dat'
+Output: map\_concrec******.png - A static image file of the SO2 plume (with no basemap).
+        map\_concrec******.html - An interactive webpage of the SO2 plume (Google basemap).
 """
 
 import numpy as np
@@ -20,7 +26,7 @@ parser.add_argument("concFile", help="absolute/relative path to concrec data fil
 args = parser.parse_args()
 assert os.path.exists(args.concFile), "concrec data file not found. Check path."
 concFile=args.concFile
-#concFile='/nfs/see-fs-01_users/earjjo/Data/concrec010001.dat'
+#concFile=os.environ['HOME']+'/Data/concrec010001.dat'
 
 scriptPath=os.path.dirname(os.path.realpath(__file__))
 
