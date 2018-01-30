@@ -7,7 +7,7 @@
 \usepackage[T1]{fontenc}
 \renewcommand\labelitemii{$\circ$}
 \newcommand\tab[1][0.5cm]{\hspace*{#1}}
-\title{CEMAC User Guide: UNRESP}
+\title{CEMAC Documentation: UNRESP}
 \begin{document}
 
 \maketitle
@@ -99,8 +99,133 @@ The python script works as follows:
 \item The `stride' parameter is hard-coded to 100 but can be reduced to increase the resolution of the plot (takes longer to execute).
 \end{itemize}
 
+\section{CALPUFF: Installation guide}
+
+\subsection{General compiler settings}
+***The intel compilers are preferred***\\\\
+To use the pgi compilers:
+\begin{itemize}
+\item Switch out the gnu compilers for the pgi compilers using: \texttt{\$ module switch gnu/native pgi/16.9}
+\item Compile using: \texttt{\$ pgf90 -O0 -Kieee -Ktrap=fp -Msave <mainFortranFile>.f -o <mainFortranFile>\_pgi.exe}. These compiler flags are based on the ones given here: \url{http://www.src.com/calpuff/FAQ-answers.htm#1.1.13}. Note that the -tp flag has been removed, as the default is to build as appropriate for the current system, and the pgi library path has also been removed, since this is added to LD\_LIBRARY\_PATH by default when loading the pgi module (can confirm using `\texttt{\$ module show pgi}'. The remaining flags do the following:
+\begin{itemize}
+\item \texttt{\textbf{-O0}} -- Don't perform any optimisation (compilation will be fast, executable will be slow)
+\item \texttt{\textbf{-Kieee}} -- Perform floating-point operations in strict conformance with the IEEE 754 standard.
+\item \texttt{\textbf{-Ktrap=fp}} -- Controls the behaviour of the processor when exceptions occur. fp traps on floating point exceptions (divide by zeros, invalid operations, floating-point overflows), otherwise they would be masked and the processor would recover from the exception and continue).
+\item \texttt{\textbf{-Msave}} -- Assume that all local variables are subject to the Fortran SAVE statement. (Note: this flag can greatly reduce performance, so might consider adding explicit statements only where needed in the source code to achieve speed-up?)
+\end{itemize}
+\end{itemize}
+To use the Intel compilers:
+\begin{itemize}
+\item Switch out the gnu compilers for the Intel compilers using: \texttt{\$ module switch gnu/native intel/17.0.0}
+\item Compile using: \texttt{\$ ifort -O0 -fltconsistency <mainFortranFile>.f -o <mainFortranFile>\_intel.exe}. It appears that the Intel compilers don't have an equivalent flag for Ktrap=fp or Msave (I think Msave behaviour is done by default through the default -auto-scalar flag).
+\end{itemize}
+
+\subsection{TERREL}
+\subsubsection{Build}
+To build the original source code:
+\begin{itemize}
+\item Download and unzip version 7.0.0 (L141010) from \url{http://www.src.com/calpuff/download/mod7_codes.htm}.
+\item Convert all filenames to lowercase using: \texttt{\$ ls | while read upName; do loName=`echo "\${upName}" | tr '[:upper:]' '[:lower:]'`; mv "\$upName" "\$loName"; done}. (make sure no alias for ls is being used first).
+\item To get the pgi compilers to work, make the following changes:
+\begin{itemize}
+\item In terrel.for, replace the instance of `\textbackslash' with `/'.
+\item In terrel.for, delete the `flen' argument in the line "inquire(file=datafil(k),exist=lexist,flen=isize)". This is a Lahey-specific argument.
+\end{itemize}
+\item To get the Intel compilers to work:
+\begin{itemize}
+\item In params.trl, comment out the `Lahey F95 Compiler' block and uncomment the `Compaq DF Compiler' block.
+\item In terrel.for, delete the `flen' argument in the line "inquire(file=datafil(k),exist=lexist,flen=isize)". This is a Lahey-specific argument.
+\end{itemize}
+\item Compile using preferred compiler, as described above.
+\end{itemize}
+\subsubsection{Setup}
+To set up TERREL:
+\begin{itemize}
+\item Make a subdirectory called `data' and put the following files inside it:
+\begin{itemize}
+\item w100n40.dem -- The DEM data file for Central America from the GTOPO30 dataset (downloaded via \url{http://www.src.com/calpuff/data/terrain.html}). Make sure to rename this file to the name given here if necessary.
+\item (optional) xy\_masaya.dat -- This is a 2-column text file containing the x and y coordinates (in km, in the same projection as used for the main grid) of receptor points at which the terrain height will be calculated in addition to the gridded points in the main output file (only output if LXY = T in the input file).
+\end{itemize}
+\item Open the input file (terrel.inp) and make the following changes:
+\begin{itemize}
+\item NTDF -- Change to `1' (as we only have one input DEM file).
+\item OUTFIL -- (optional) Change to e.g. `masaya.dat'. This is main output file that will contain the gridded processed terrain data.
+\item LSTFIL -- (optional) Change to e.g. `masaya.lst'. This is essentially the log file.
+\item PLTFIL -- (optional) Change to e.g. `masaya.grd'. This is an output file that can be plotted with e.g. the Surfer software package.
+\item RAWECHO -- (optional) Change to e.g. `raw\_masaya.dat'. This is an output file that simply echoes the raw input DEM data but in ASCII format.
+\item SAVEFIL -- (optional) Change to e.g. `masaya.sav'. This is an output binary save file that can later be used for a continuation run of TERREL (we probably don't need this).
+\item XYINP -- (if LXY = T is set below) Change to `data/xy\_masaya.dat'. This is the path to the input receptor points file.
+\item XYOUT -- (optional; if LXY = T is set below) Change to e.g. `xyoutput\_masaya.rec'. This is output (elevation heights) at the receptor points.
+\item LCFILES -- Set to T (true). This is a bit annoying, but all files have to have names in either full uppercase or lowercase, and I find lowercase nicer.
+\item Subgroup (0b) -- At the end of this section, ensure that there is only one line that reads "1 !GTOPO30 = data/w100n40.dem !     !END!". This is the path to the DEM file.
+\item LINTXY -- Set to F (false). Receptor point elevations will not be interpolated but be be the peak heights.
+\item XYRADKM -- Set to 5.0. Search radius (km) for locating the peak heights at the receptor points.
+\item LCOAST -- Set to F. We don't have coastline data to process.
+\item LBLNREAD -- Set to F. We don't have coastline data to process.
+\item LVOIDFIL -- Set to F. Don't interpolate to fill void cells. This should ensure the same behaviour as used by Sara.
+\item MSHEET -- Set to 0 for now. This will ensure the same coordinate mapping as used by Sara. Consider switching back to 1 at a later date.
+\item IUTMZN -- Set to 16. This is the UTM zone for Nicaragua.
+\item XREFKM -- Set to 525.09417. This is the x-coordinate of the reference point (lower left corner) of the intended output grid. I think this is an easting (km) relative to the lower left corner of the UTM zone being used.
+\item YREFKM -- Set to 1294.23926. This is the corresponding y-coordinate (northing).
+\item NX -- Set to 91. This is the intended number of grid cells in x.
+\item NY -- Set to 55. This is the intended number of grid cells in y.
+\item DGRIDKM -- Set to 1.0. This is the intended grid spacing (in x and y).
+\end{itemize}
+\end{itemize}
+\subsubsection{Run}
+To run TERREL, type:\\\\
+\tab \texttt{\$ ./terrel\_<compiler>.exe}
 
 
+\subsection{CALETA}
+\subsubsection{Build}
+To build the original source code:
+\begin{itemize}
+\item Download version 3.2 (100727) from \url{http://www.src.com/calpuff/download/mod7_codes.htm} and unzip
+\item Open caleta.f in a text editor, navigate to subroutines `getfile\_fst' and `getfile\_ana' in turn, and replace the `/' with a `\textbackslash' in the 101 format statement (the pgi compiler reports error otherwise).
+\item Compile using preferred compiler, as described above.
+\end{itemize}
+NOTE, the original caleta.f and the one supplied by IMO are markedly different (see, for example, differences in subroutine lists using \texttt{`\$ fgrep `subroutine' <path/to/orig/caleta.f -i > Orig\_caleta.txt'}, then \texttt{`\$ fgrep `subroutine' <path/to/IMO/caleta.f -i > IMO\_caleta.txt'}, then \texttt{`\$ tkdiff Orig\_caleta.txt IMO\_caleta.txt}. To build the IMO version:
+\begin{itemize}
+\item Copy the files caleta.f, eta2m3d.blk, eta2m3d.cm1 and eta2m3d.par from Mark's Caleta directory into a clean directory and run the appropriate compilation command as above (ifort is preferred).
+\end{itemize}
 
+\subsubsection{Run}
+To run the IMO version:
+\begin{itemize}
+\item From Mark's RUN directory, copy the files grid.dat, timestmp.dat and eta2m3d.inp into the directory. timestmp.dat contains the start date of the simulation in the format ddmmyyyy and is created after running launch\_long\_run.sh. 
+\item Modify eta2m3d.inp to point towards the directory with the grib files in it.
+\item Run the caleta\_intel executable.
+\end{itemize}
+
+\subsection{CALMET}
+\subsubsection{Build}
+To build the original source code:
+\begin{itemize}
+\item Download version 6.5.0 (150223) from \url{http://www.src.com/calpuff/download/mod7_codes.htm} and unzip
+\item Convert all filenames to lowercase using: \texttt{\$ ls | while read upName; do loName=`echo "\${upName}" | tr '[:upper:]' '[:lower:]'`; mv "\$upName" "\$loName"; done}. (make sure no alias for ls is being used first).
+\item Switch to Intel compilers and use: \texttt{\$ ifort -O0 -fltconsistency calmet.for -o calmet\_intel.x}
+\end{itemize}
+To build the IMO version, copy the contents of Mark's CalMet directory and issue same command.
+
+\subsubsection{Run}
+To run the IMO version:
+\begin{itemize}
+\item From Mark's RUN directory, copy the files calmet.inp and geo\_masaya.dat. From the Caleta directory (see above), copy the file out\_caleta.m3d.
+\item Run the calmet\_intel executable.
+\item ***NOTE*** I got an input conversion error when I used my own out\_caleta.m3d, so I swapped it for the out\_caleta.m3d in Mark's RUN directory, and it worked 
+\end{itemize}
+
+\subsection{CALPUFF}
+\subsubsection{Build}
+To build the IMO version, copy the contents of Mark's CalPuff directory and run: \texttt{\$ ifort -O0 -fltconsistency calpuff.for -o calpuff\_intel.x}
+
+\subsubsection{Run}
+To run the IMO version:
+\begin{itemize}
+\item From Mark's RUN directory, copy the files calpuff.inp. From the Calmet directory, copy the files CALMET.DAT.
+\item Modify calpuff.inp so the the restart flag (RESTARTB) is set to 0.
+\item Run the calpuff\_intel executable.
+\end{itemize}
 
 \end{document}
