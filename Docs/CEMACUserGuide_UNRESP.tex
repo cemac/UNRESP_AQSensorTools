@@ -126,15 +126,14 @@ To build the original source code:
 \begin{itemize}
 \item Download and unzip version 7.0.0 (L141010) from \url{http://www.src.com/calpuff/download/mod7_codes.htm}.
 \item Convert all filenames to lowercase using: \texttt{\$ ls | while read upName; do loName=`echo "\${upName}" | tr '[:upper:]' '[:lower:]'`; mv "\$upName" "\$loName"; done}. (make sure no alias for ls is being used first).
-\item To get the pgi compilers to work, make the following changes:
+\item In terrel.for, delete the `flen' argument in the line "inquire(file=datafil(k),exist=lexist,flen=isize)". This is a Lahey-specific argument.
+\item To get the pgi compilers to work, make the following additional changes:
 \begin{itemize}
 \item In terrel.for, replace the instance of `\textbackslash' with `/'.
-\item In terrel.for, delete the `flen' argument in the line "inquire(file=datafil(k),exist=lexist,flen=isize)". This is a Lahey-specific argument.
 \end{itemize}
-\item To get the Intel compilers to work:
+\item To get the Intel compilers to work, make the following additional changes:
 \begin{itemize}
 \item In params.trl, comment out the `Lahey F95 Compiler' block and uncomment the `Compaq DF Compiler' block.
-\item In terrel.for, delete the `flen' argument in the line "inquire(file=datafil(k),exist=lexist,flen=isize)". This is a Lahey-specific argument.
 \end{itemize}
 \item Compile using preferred compiler, as described above.
 \end{itemize}
@@ -149,13 +148,13 @@ To set up TERREL:
 \item Open the input file (terrel.inp) and make the following changes:
 \begin{itemize}
 \item NTDF -- Change to `1' (as we only have one input DEM file).
-\item OUTFIL -- (optional) Change to e.g. `masaya.dat'. This is main output file that will contain the gridded processed terrain data.
-\item LSTFIL -- (optional) Change to e.g. `masaya.lst'. This is essentially the log file.
-\item PLTFIL -- (optional) Change to e.g. `masaya.grd'. This is an output file that can be plotted with e.g. the Surfer software package.
-\item RAWECHO -- (optional) Change to e.g. `raw\_masaya.dat'. This is an output file that simply echoes the raw input DEM data but in ASCII format.
-\item SAVEFIL -- (optional) Change to e.g. `masaya.sav'. This is an output binary save file that can later be used for a continuation run of TERREL (we probably don't need this).
+\item OUTFIL -- Change to e.g. `masaya.dat'. This is main output file that will contain the gridded processed terrain data.
+\item LSTFIL -- Change to e.g. `masaya.lst'. This is essentially the log file.
+\item PLTFIL -- Change to e.g. `masaya.grd'. This is an output file that can be plotted with e.g. the Surfer software package.
+\item RAWECHO -- Change to e.g. `raw\_masaya.dat'. This is an output file that simply echoes the raw input DEM data but in ASCII format.
+\item SAVEFIL -- Change to e.g. `masaya.sav'. This is an output binary save file that can later be used for a continuation run of TERREL (we probably don't need this).
 \item XYINP -- (if LXY = T is set below) Change to `data/xy\_masaya.dat'. This is the path to the input receptor points file.
-\item XYOUT -- (optional; if LXY = T is set below) Change to e.g. `xyoutput\_masaya.rec'. This is output (elevation heights) at the receptor points.
+\item XYOUT -- (if LXY = T is set below) Change to e.g. `xyoutput\_masaya.rec'. This is output (elevation heights) at the receptor points.
 \item LCFILES -- Set to T (true). This is a bit annoying, but all files have to have names in either full uppercase or lowercase, and I find lowercase nicer.
 \item Subgroup (0b) -- At the end of this section, ensure that there is only one line that reads "1 !GTOPO30 = data/w100n40.dem !     !END!". This is the path to the DEM file.
 \item LINTXY -- Set to F (false). Receptor point elevations will not be interpolated but be be the peak heights.
@@ -176,6 +175,89 @@ To set up TERREL:
 To run TERREL, type:\\\\
 \tab \texttt{\$ ./terrel\_<compiler>.exe}
 
+\subsection{CTGPROC}
+\subsubsection{Build}
+To build the original source code:
+\begin{itemize}
+\item Download and unzip version 7.0.0 (L150211) from \url{http://www.src.com/calpuff/download/mod7_codes.htm}.
+\item Convert all filenames to lowercase using: \texttt{\$ ls | while read upName; do loName=`echo "\${upName}" | tr '[:upper:]' '[:lower:]'`; mv "\$upName" "\$loName"; done}.
+\item To get the pgi compilers to work, make the following changes:
+\begin{itemize}
+\item In ctgproc.for, replace the instance of `\textbackslash' with `/'.
+\end{itemize}
+\item To get the Intel compilers to work, make the following changes:
+\begin{itemize}
+\item In params.ctg, comment out the `Lahey F95 Compiler' block and uncomment the `INTEL Compiler' block.
+\item In control.ctg, add the missing variable `lll' to the /CONTROL/ common block.
+\end{itemize}
+\item Compile using preferred compiler, as described above.
+\end{itemize}
+
+\subsubsection{Setup}
+To set up CTGPROC:
+\begin{itemize}
+\item Make a subdirectory called `data' and put the following file inside it:
+nalulcl20.tif -- The `USGS Land Use/Land Cover' tif file for North America (Global Lambert Azimuthal), downloaded via \url{http://www.src.com/calpuff/data/land_use.html}.
+\item Open the input file (ctgproc.inp) and make the following changes:
+\begin{itemize}
+\item NDBF -- Set to 1 (we only have one input land-use file).
+\item LUDAT -- Set to e.g. lulc1km\_masaya.dat. This is the main output file containing the land-use categories on the intended CALPUFF grid.
+\item RUNLST -- Set to e.g. ctgproc\_masaya.lst.
+\item Subgroup (0b) -- At the end of this section, ensure that there is only one line that reads "! GLAZNA  =  data/nalulcl20.tif !  !END!". This is the path to the land-use data file.
+\item MESHGLAZ -- Set to 2. This will split each input grid cell (~1km) into 2x2 grid cells (each assigned the same land-use category). This ensures that there will be no CALPUFF grid cells (also 1km resolution) with missing data in them.
+\item PMAP -- Set to `UTM'
+\item IUTMZN -- Set to 16
+\item DATUM -- Set to `WGS-84'
+\item XREFKM -- Set to 525.09417
+\item YREFKM -- Set to 1294.23926
+\item NX -- Set to 91
+\item NY -- Set to 55
+\end{itemize}
+\end{itemize}
+
+\subsubsection{Run}
+To run CTGPROC, type:\\\\
+\tab \texttt{\$ ./ctgproc\_<compiler>.exe}\\\\
+****NOTE**** Current issues with both compilers. Intel runs but the output file contains only one land-use category over the entire output grid (number 52, which I think might be 'lakes'). PGI claims that it can't find the data file, even though it is there.
+
+\subsection{MAKEGEO}
+\subsubsection{Build}
+To build the original source code:
+\begin{itemize}
+\item Download and unzip version 3.2 (L110401) from \url{http://www.src.com/calpuff/download/mod7_codes.htm}.
+\item Convert all filenames to lowercase using: \texttt{\$ ls | while read upName; do loName=`echo "\${upName}" | tr '[:upper:]' '[:lower:]'`; mv "\$upName" "\$loName"; done}.
+\item In subroutine `comline' (calutils.for), comment out the call to `getcl' and uncomment the Sun compiler block (this seems to work for both the inel and pgi compilers).
+\item Compile using preferred compiler, as described above.
+\item ***Note*** There are a lot of warning messages with the intel compiler regarding a common block in snow.geo, however, the executable is still generated.
+\end{itemize}
+
+\subsubsection{Setup}
+To set up MAKEGEO:
+\begin{itemize}
+\item Make a subdirectory called `data' and put the following file inside it:
+\begin{itemize}
+\item masaya.dat -- The terrain output file from running TERREL.
+\item lulc1km\_masaya.dat -- The land-use output file from running CTGPROC.
+\end{itemize}
+\item Open the input file (makegeo.inp) and make the following changes:
+\begin{itemize}
+\item LUDAT -- Set to data/lulc1km\_masaya.dat (or whatever the path to the land-use input data file is).
+\item TERRDAT -- Set to data/masaya.dat (or whatever the path to the terrain input data file is).
+\item GEODAT -- Set to e.g. geo\_masaya.dat. This is the main output file that will serve as input to CALMET for the geophysical data.
+\item RUNLST -- Set to e.g. geo\_masaya.lst
+\item LCFILES -- Set to T to keep all filenames lowercase.
+\item LSNOW -- Set to F (we don't have any snow data)
+\item IUTMZN -- Set to 16
+\item XREFKM -- Set to 525.09417
+\item YREFKM -- Set to 1294.23926
+\item NX -- Set to 91
+\item NY -- Set to 55
+\end{itemize}
+\end{itemize}
+
+\subsubsection{Run}
+To run MAKEGEO, type:\\\\
+\tab \texttt{\$ ./makegeo\_<compiler>.exe}
 
 \subsection{CALETA}
 \subsubsection{Build}
