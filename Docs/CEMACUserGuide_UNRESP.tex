@@ -4,6 +4,7 @@
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{hyperref}
+\usepackage{listings}
 \usepackage[T1]{fontenc}
 \renewcommand\labelitemii{$\circ$}
 \newcommand\tab[1][0.5cm]{\hspace*{#1}}
@@ -125,7 +126,7 @@ To use the Intel compilers:
 To build the original source code:
 \begin{itemize}
 \item Download and unzip version 7.0.0 (L141010) from \url{http://www.src.com/calpuff/download/mod7_codes.htm}.
-\item Convert all filenames to lowercase using: \texttt{\$ ls | while read upName; do loName=`echo "\${upName}" | tr '[:upper:]' '[:lower:]'`; mv "\$upName" "\$loName"; done}. (make sure no alias for ls is being used first).
+\item Convert all filenames to lowercase using: \texttt{\$ ls | while read upName; do loName=`echo "\${upName}" | tr '[:upper:]' '[:lower:]'`; mv "\$upName" "\$loName"; done}.
 \item In terrel.for, delete the `flen' argument in the line "inquire(file=datafil(k),exist=lexist,flen=isize)". This is a Lahey-specific argument.
 \item To get the pgi compilers to work, make the following additional changes:
 \begin{itemize}
@@ -197,13 +198,13 @@ To build the original source code:
 To set up CTGPROC:
 \begin{itemize}
 \item Make a subdirectory called `data' and put the following file inside it:
-nalulcl20.tif -- The `USGS Land Use/Land Cover' tif file for North America (Global Lambert Azimuthal), downloaded via \url{http://www.src.com/calpuff/data/land_use.html}.
+nalulcl20.bil -- The `USGS Land Use/Land Cover' BIL format file for North America (Global Lambert Azimuthal), downloaded via \url{http://www.src.com/calpuff/data/land_use.html}. Note that the TIFF-format version of this data file does not work properly (alignment issues).
 \item Open the input file (ctgproc.inp) and make the following changes:
 \begin{itemize}
 \item NDBF -- Set to 1 (we only have one input land-use file).
 \item LUDAT -- Set to e.g. lulc1km\_masaya.dat. This is the main output file containing the land-use categories on the intended CALPUFF grid.
 \item RUNLST -- Set to e.g. ctgproc\_masaya.lst.
-\item Subgroup (0b) -- At the end of this section, ensure that there is only one line that reads "! GLAZNA  =  data/nalulcl20.tif !  !END!". This is the path to the land-use data file.
+\item Subgroup (0b) -- At the end of this section, ensure that there is only one line that reads "! GLAZNA  =  data/nalulcl20.bil !  !END!". This is the path to the land-use data file.
 \item MESHGLAZ -- Set to 2. This will split each input grid cell (~1km) into 2x2 grid cells (each assigned the same land-use category). This ensures that there will be no CALPUFF grid cells (also 1km resolution) with missing data in them.
 \item PMAP -- Set to `UTM'
 \item IUTMZN -- Set to 16
@@ -218,7 +219,7 @@ nalulcl20.tif -- The `USGS Land Use/Land Cover' tif file for North America (Glob
 \subsubsection{Run}
 To run CTGPROC, type:\\\\
 \tab \texttt{\$ ./ctgproc\_<compiler>.exe}\\\\
-****NOTE**** Current issues with both compilers. Intel runs but the output file contains only one land-use category over the entire output grid (number 52, which I think might be 'lakes'). PGI claims that it can't find the data file, even though it is there.
+****NOTE**** PGI compiler claims that it can't find the data file, even though it is there. Can therefore only use Intel compilers at present.
 
 \subsection{MAKEGEO}
 \subsubsection{Build}
@@ -226,7 +227,7 @@ To build the original source code:
 \begin{itemize}
 \item Download and unzip version 3.2 (L110401) from \url{http://www.src.com/calpuff/download/mod7_codes.htm}.
 \item Convert all filenames to lowercase using: \texttt{\$ ls | while read upName; do loName=`echo "\${upName}" | tr '[:upper:]' '[:lower:]'`; mv "\$upName" "\$loName"; done}.
-\item In subroutine `comline' (calutils.for), comment out the call to `getcl' and uncomment the Sun compiler block (this seems to work for both the inel and pgi compilers).
+\item In subroutine `comline' (calutils.for), comment out the call to `getcl' and uncomment the Sun compiler block (this seems to work for both the intel and pgi compilers).
 \item Compile using preferred compiler, as described above.
 \item ***Note*** There are a lot of warning messages with the intel compiler regarding a common block in snow.geo, however, the executable is still generated.
 \end{itemize}
@@ -252,6 +253,7 @@ To set up MAKEGEO:
 \item YREFKM -- Set to 1294.23926
 \item NX -- Set to 91
 \item NY -- Set to 55
+\item Comment out (i.e. replace all occurrences of `!' with `*') the entries in subgroup 4c and 4e
 \end{itemize}
 \end{itemize}
 
@@ -260,54 +262,216 @@ To run MAKEGEO, type:\\\\
 \tab \texttt{\$ ./makegeo\_<compiler>.exe}
 
 \subsection{CALETA}
+There is a requirement to switch from using ECMWF GRIB data to open-source prognostic met data. This is because the ECMWF data is only free to academic institutions, and so INETER would not be able to acquire this data going forward. Work is in progress to identify an alternative data source. This will likely also require the creation of a tool to read in this data and convert it to the 3D.dat file format expected by CALMET. This is preferred over developing CALETA itself to perform this task, which is currently only able to work on particular datasets (most of which are specific to US-region-only datasets).\\\\
+For completeness, below is information on how to build and run CALETA for using the ECMWF GRIB files
 \subsubsection{Build}
 To build the original source code:
 \begin{itemize}
 \item Download version 3.2 (100727) from \url{http://www.src.com/calpuff/download/mod7_codes.htm} and unzip
-\item Open caleta.f in a text editor, navigate to subroutines `getfile\_fst' and `getfile\_ana' in turn, and replace the `/' with a `\textbackslash' in the 101 format statement (the pgi compiler reports error otherwise).
+\item To get the pgi compilers to work, open caleta.f in a text editor, navigate to subroutines `getfile\_fst' and `getfile\_ana' in turn, and replace the `/' with a `\textbackslash' in the 101 format statement.
 \item Compile using preferred compiler, as described above.
 \end{itemize}
-NOTE, the original caleta.f and the one supplied by IMO are markedly different (see, for example, differences in subroutine lists using \texttt{`\$ fgrep `subroutine' <path/to/orig/caleta.f -i > Orig\_caleta.txt'}, then \texttt{`\$ fgrep `subroutine' <path/to/IMO/caleta.f -i > IMO\_caleta.txt'}, then \texttt{`\$ tkdiff Orig\_caleta.txt IMO\_caleta.txt}. To build the IMO version:
+****NOTE, the original caleta.f and the one supplied by IMO are markedly different (see, for example, differences in subroutine lists using \texttt{`\$ fgrep `subroutine' <path/to/orig/caleta.f -i > Orig\_caleta.txt'}, then \texttt{`\$ fgrep `subroutine' <path/to/IMO/caleta.f -i > IMO\_caleta.txt'}, then \texttt{`\$ tkdiff Orig\_caleta.txt IMO\_caleta.txt}.\\\\
+To build the IMO version:
 \begin{itemize}
-\item Copy the files caleta.f, eta2m3d.blk, eta2m3d.cm1 and eta2m3d.par from Mark's Caleta directory into a clean directory and run the appropriate compilation command as above (ifort is preferred).
+\item Copy the files caleta.f, eta2m3d.blk and eta2m3d.cm1 from Mark's Caleta directory, and eta2m3d.par from Mark's RUN directory, into a clean directory and run the appropriate compilation command as above (ifort is preferred).
 \end{itemize}
 
 \subsubsection{Run}
-To run the IMO version:
+To run the self-built IMO version:
 \begin{itemize}
 \item From Mark's RUN directory, copy the files grid.dat, timestmp.dat and eta2m3d.inp into the directory. timestmp.dat contains the start date of the simulation in the format ddmmyyyy and is created after running launch\_long\_run.sh. 
-\item Modify eta2m3d.inp to point towards the directory with the grib files in it.
-\item Run the caleta\_intel executable.
+\item Run caleta using:\\\\
+\tab \texttt{\$ ./caleta\_<compiler>.exe}
 \end{itemize}
+***NOTE: This gives an output file (out\_caleta.m3d) that is different to the one in Mark's RUN directory. Specifically, the new file has non-zero terrain heights where Mark has all zeros, and also some zeros for sea-level-pressure and bad output (*****) for precipitation. This causes issues in the next step (CALMET). Running the IMO-built version (the "caleta\_masaya" executable in the EXEC directory) on the same input files produces a valid out\_caleta.m3d file; this suggests that the code in Mark's Caleta directory is somehow different to the code used to build the Caleta executable in the EXEC directory.
 
 \subsection{CALMET}
 \subsubsection{Build}
 To build the original source code:
 \begin{itemize}
-\item Download version 6.5.0 (150223) from \url{http://www.src.com/calpuff/download/mod7_codes.htm} and unzip
-\item Convert all filenames to lowercase using: \texttt{\$ ls | while read upName; do loName=`echo "\${upName}" | tr '[:upper:]' '[:lower:]'`; mv "\$upName" "\$loName"; done}. (make sure no alias for ls is being used first).
-\item Switch to Intel compilers and use: \texttt{\$ ifort -O0 -fltconsistency calmet.for -o calmet\_intel.x}
+\item Download version 6.5.0 (150223) from \url{http://www.src.com/calpuff/download/mod7_codes.htm} and unzip. Create a temporary directory, cd into it, and unzip the second file inside. Copy CALMET.INP from this temporary directory into the main unzipped directory, and then delete the temporary directory.
+\item Convert all filenames to lowercase using: \texttt{\$ ls | while read upName; do loName=`echo "\${upName}" | tr '[:upper:]' '[:lower:]'`; mv "\$upName" "\$loName"; done}.
+\item In params.met, change mxnz from 12 to 27 and mxnzi from 12 to 50.
+\item Compile using preferred compiler, as described above.
 \end{itemize}
-To build the IMO version, copy the contents of Mark's CalMet directory and issue same command.
+
+\subsubsection{Setup}
+To set up CALMET:
+\begin{itemize}
+\item Make a subdirectory called `data' and put the following file inside it:
+\begin{itemize}
+\item geo\_masaya.dat -- The output file from running MAKEGEO.
+\item out\_caleta.m3d -- The output file from running CALETA.
+\end{itemize}
+\item Fix the apparent issue in the out\_caleta.m3d file -- In the first surface data-block, replace the latitudes and longitudes of the first few points in the extraction subdomain to match all the other surface data-blocks.
+\item Open the input file (calmet.inp) and make the following changes:
+\begin{itemize}
+\item GEODAT -- Set to data/geo\_masaya.dat.
+\item LCFILES -- Set to T
+\item NUSTA -- Set to 0 (we don't have any upper-air stations)
+\item NOWSTA -- Set to 0 (we don't have any overwater stations)
+\item UPDAT -- Comment out all three lines (we don't have upper air data)
+\item SEADAT -- Comment out (we don't have overwater stations data)
+\item M3DDAT -- Set to data/out\_caleta.m3d
+\item IBYR, IBMO, IBDY, IBHR -- Set to required simulation start date/time (e.g. 2017, 12, 04, 0)
+\item IEYR, IEMO, IEDY, IEHR -- Set to required simulation end date/time (e.g. 2017, 12, 06, 0)
+\item ABTZ -- Set to UTC+0000 (we want times in UTC)
+\item LCALGRD -- Set to F (don't compute special data fields)
+\item IUTMZN -- Set to 16
+\item DATUM -- Set to WGS-84
+\item NX -- Set to 91
+\item NY -- Set to 55
+\item XORIGKM -- Set to 525.09417
+\item YORIGKM -- Set to 1294.23926
+\item NZ -- Set to 24
+\item ZFACE -- Set to "0, 20, 60, 140, 260, 540, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 11000, 12000, 13000, 14000, 15000, 16000, 17000, 18000, 19000". These are the heights of the output grid
+\item NOOBS -- Set to 2 (use 3D data for surface, overwater and upper air data)
+\item NSSTA -- Set to 0 (no surface stations)
+\item NPSTA -- Set to -1 (flag to use 3D precip data)
+\item MCLOUD -- Set to 4 (use prognostic 3D RH fields to get gridded cloud cover at all levels)
+\item BIAS -- Set to 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 (i.e. zero bias at each Z level)
+\item IPROG -- Set to 14 (i.e. use 3D winds as initial guess field)
+\item ISTEPPGS -- Set to 10800 (timestep of the prognostic met model) ***This was set to 3 in Mark's input file, but this caused an error for me, plus 10800 seems correct.***
+\item RMAX1-RMAX3 -- Set all to 5.0 (radii of influence in km for stations)
+\item RPROG -- Set to 1.0 (weighting parameter of the 3D data).
+\item NSMTH -- Set to 2, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 ,4 (number of passes in the smoothing procedure for each Z level)
+\item NINTR2 -- (not needed?) Set to 5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5 (max stations used per Z level for interpolation)
+\item FEXTR2 -- (not needed?) Set to 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 (not used but need NZ values)
+\item ISURFT -- Set to -2 (use domain-average prognostic lapse rate)
+\item IUPT -- Set to -2 (use domain-average prognostic lapse rate)
+\item ZUPT -- Set to 100. (depth through which the domain-scale lapse rate is computed)
+\item IMIXH -- Set to 2 (Batchvarova and Gryning mixing height method used over all surfaces)
+\item DZZI -- Set to 300. (depth, m, of layer above current convective mixing height through which lapse rate is computed)
+\item ZIMIN -- Set to 250. (minimum overland mixing height)
+\item ITPROG -- Set to 1 (use prognostic RH)
+\item ITPROG -- Set to 2 (no surface or upper-air temperature observations; use 3D data).
+\end{itemize}
+\end{itemize}
 
 \subsubsection{Run}
-To run the IMO version:
-\begin{itemize}
-\item From Mark's RUN directory, copy the files calmet.inp and geo\_masaya.dat. From the Caleta directory (see above), copy the file out\_caleta.m3d.
-\item Run the calmet\_intel executable.
-\item ***NOTE*** I got an input conversion error when I used my own out\_caleta.m3d, so I swapped it for the out\_caleta.m3d in Mark's RUN directory, and it worked 
-\end{itemize}
+To run CALMET, type:\\\\
+\tab \texttt{\$ ./calmet\_<compiler>.exe}
+
 
 \subsection{CALPUFF}
 \subsubsection{Build}
-To build the IMO version, copy the contents of Mark's CalPuff directory and run: \texttt{\$ ifort -O0 -fltconsistency calpuff.for -o calpuff\_intel.x}
+To build the original source code:
+\begin{itemize}
+\item Download version 7.2.1 (150618) from \url{http://www.src.com/calpuff/download/mod7_codes.htm} and unzip
+\item Convert all filenames to lowercase using: \texttt{\$ ls | while read upName; do loName=`echo "\${upName}" | tr '[:upper:]' '[:lower:]'`; mv "\$upName" "\$loName"; done}.
+\item In params.puf, change mxnz from 12 to 27 and mxrec from 10000 to 20000.
+\item In calpuff.for, near the end of subroutine `comp' (e.g. just after the call to FOGOUT), insert the following lines of code to write out the hourly concentrations to individual files:\\
+\begin{lstlisting}
+         do ispec=1,nspec
+         write(infile,10000) ispec, nn
+10000    format('concrec',I2.2,I4.4,'.dat')
+         open(50,file=infile)
+          do i=1,nrec
+          write(50,*) chirec(i,ispec)
+          end do
+         end do
+         close(50)
+\end{lstlisting}
+Also add `character*150 infile' to the declarations of this subroutine.
+\item Build in two stages. For intel compilers:\\
+\tab \texttt{\$ ifort -c modules.for}\\
+\tab \texttt{\$ ifort -O0 -fltconsistency calpuff.for modules.o -o calpuff.exe}
+\end{itemize}
+
+\subsubsection{Setup}
+To set up CALPUFF:
+\begin{itemize}
+\item Make a subdirectory called `data' and put calmet.dat (the output file from CALMET) inside it
+\item Rename the input file from calpuff\_v7.inp to calpuff.inp, open it, and make the following changes:
+\begin{itemize}
+\item METDAT -- Change to data/calmet.dat
+\item RSTARTE -- Uncomment and set to restart\_so2\_e.dat. This is the name given to the generated restart file at simulation end.
+\item OZDAT -- Comment out
+\item DEBUG -- Uncomment and set to debug.dat (we want an output debug file)
+\item BALDAT -- Uncomment and set to massbal.dat (we want an output mass balance file)
+\item LCFILES -- Set to T
+\item IBYR, IBMO, IBDY, IBHR -- Set to required simulation start date/time (e.g. 2017, 12, 04, 0)
+\item IEYR, IEMO, IEDY, IEHR -- Set to required simulation end date/time (e.g. 2017, 12, 06, 0)
+\item ABTZ -- Set to UTC+0000 (we want times in UTC) 
+\item NSPEC -- Set to 2 (we have SO2 and SO4)
+\item NSE -- Set to 1 (only one species actually emitted; SO4 is created in the atmosphere)
+\item MRESTART -- Set to 2 for main run (i.e. write a restart file at the end of the run)
+\item MTRANS -- Set to 0 (don't model transitional plume rise)
+\item MTIP -- Set to 0 (don't model stack downwash)
+\item MBDW -- (not needed?) Set to 2 (use PRIME building downwash method)
+\item MSHEAR -- Set to 1 (vertical wind shear modelled)
+\item MCHEM -- Set to 1 (use MESOPUFF II cheical scheme)
+\item MWET -- Set to 0 (don't model wet removal)
+\item MPARTL -- Set to 0 (don't model partial plume penetration)
+\item MPARTLBA -- Set to 0 (don't model partial plume penetration)
+\item CSPEC -- Delete all but SO2 and SO4 from both the list and the table
+\item IUTMZN -- Set to 16
+\item DATUM -- Set to WGS-84
+\item NX -- Set to 91
+\item NY -- Set to 55
+\item NZ -- Set to 24
+\item ZFACE -- Set to "0,20,60,140,260,540,1000,2000,3000,4000,5000,6000,7000, 8000,9000,10000,11000,12000,13000,14000,15000,16000,17000,18000,19000"
+\item XORIGKM -- Set to 525.09417
+\item YORIGKM -- Set to 1294.23926
+\item IECOMP -- Set to 91 (X index of UR corner)
+\item JECOMP -- Set to 55 (J index of UR corner)
+\item LSAMP -- Set to F (no gridded receptors)
+\item IDRY -- Set to 0 (no dry fluxes output)
+\item IWET -- Set to 0 (no wet fluxes output)
+\item IVIS -- Set to 0 (no RH output)
+\item LCOMPRS -- Set to F (no compression to output file)
+\item IPFTRAK -- Set to 0 (no puff-tracking output)
+\item INRISE -- Set to 1 (create plume properties output file rise.dat)
+\item ICFRQ -- Set to 24 (concentration print interval in timesteps)
+\item IPRTU -- Set to 1 (use g/m3 for printing)
+\item SPECIES LIST -- Delete all but SO2 and SO4, and set both to "1, 1, 0, 0, 0, 0, 0" (just print and save concentrations)
+\item LDEBUG -- Set to T (debug output wanted) ***NOTE: Set this to F to dramatically reduce .lst file size***
+\item NPFDEB -- Set to 1044 (track this many puffs in debug)
+\item NN2 -- Set to 24 (stop debug output after this number of timesteps)
+\item XHILL2M -- (not needed?) Set to 0 (factor to convert horizontal dimensions to meters if MHILL is 1)
+\item ZHILL2M -- (not needed?) Set to 0 (factor to convert vertical dimensions to meters if MHILL is 1)
+\item INPUT GROUP 7 -- (not needed?) Delete all but SO2 line
+\item INPUT GROUP 8 -- (not needed?) Delete all but SO4 line
+\item INPUT GROUP 10 -- (not needed?) Delete all but SO2 line, and change liquid precip to 2.61E-05 and frozen precip to 3.0E-05
+\item MOZ -- Set to 0 (use monthly background ozone value)
+\item BCKO3 -- Set all values to 30 (monthly background ozone)
+\item BCKNH3 -- Set all values to 1.0 (monthly background ammonia)
+\item XMXLEN -- Set to 0.5 (maximum length of a slug)
+\item NCOUNT -- Set to 5 (number of iterations when computing transport wind)
+\item SZCAP\_M -- Set to -1.0 (disable)
+\item WSCALM -- Set to 0.01 (minimum wind speed for non-calm conditions)
+\item XMINZI -- Set to 20.0 (minimum mixing height)
+\item SL2PF -- Set to 5.0 (slug-to-puff transition criterion factor)
+\item SYSPLITH -- Set to 0.8 (min sig-y before split)
+\item SHSPLITH -- Set to 1.0 (min puff elongation rate before split)
+\item RSAMPBC -- Set to 15.0 (search radius for sampling nearest BC puff)
+\item MDEPBC -- Set to 0 (no adjustment for depletion)
+\item NPT1 -- Set to 0 (no point sources to follow)
+\item NSPT1 -- Set to 0 (no variable emissions factors)
+\item Subgroup 13b -- Delete all sources
+\item Subgroup 13d -- Delete all sources
+\item NAR1 -- Set to 1 (one area source to follow)
+\item Subgroup 14b -- Add following lines (source parameters):\\
+\tab ! SRCNAM = MASAYA2 !\\
+\tab ! X = 0, 520, 50, 0.004 !\\
+\tab !END!
+\item Subgroup 14c -- Add following lines (source coordinates): \\
+\tab 1 ! SRCNAM = MASAYA2 !\\
+\tab 1 ! XVERT = 590.495, 590.740, 590.702, 590.435!  \\
+\tab 1 ! YVERT = 1324.876, 1324.831, 1325.058, 1325.078!\\
+\tab !END!
+\item NREC -- Set to 18000 (number of non-gridded receptor points to follow)
+\item NRGRP -- Set to 0 (no groups of receptors)
+\item Subgroup 20b -- Delete all groups
+\item Subgroup 20c -- Paste in 18000 non-gridded receptor points from Sara's input file.
+
+\end{itemize}
+\end{itemize}
 
 \subsubsection{Run}
-To run the IMO version:
-\begin{itemize}
-\item From Mark's RUN directory, copy the files calpuff.inp. From the Calmet directory, copy the files CALMET.DAT.
-\item Modify calpuff.inp so the the restart flag (RESTARTB) is set to 0.
-\item Run the calpuff\_intel executable.
-\end{itemize}
+To run CALMET, type:\\
+\tab \texttt{\$ ./calpuff\_<compiler>.exe}\\\\
+Modify calpuff.inp so the the restart flag (RESTARTB) is set to 0 and run again.
 
 \end{document}
