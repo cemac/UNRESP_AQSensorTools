@@ -1,7 +1,12 @@
 def writeRec1(fout):
-    fout.write('{:16}{:16}{}'.format('3D.DAT','2.1','Created using Create3DDAT.py'))
-    
+    fout.write('{:16}{:16}{}\n'.format('3D.DAT','2.1','Created using Create3DDAT.py'))
 
+def writeRec2(fout):
+    fout.write('1\n')
+    fout.write("Currently set up to process GRIB data file from NAM's Central American/Caribbean domain\n")
+
+def writeRec3(fout):
+    fout.write(('{:3d}'*6+'\n').format(1,1,0,0,0,0))
 
 #import sys
 import os
@@ -34,6 +39,8 @@ fout=open(outFile,'w')
 
 #####WRITE RECORDS
 writeRec1(fout)
+writeRec2(fout)
+writeRec3(fout)
 
 #####CLOSE OUTPUT FILE
 fout.close()
