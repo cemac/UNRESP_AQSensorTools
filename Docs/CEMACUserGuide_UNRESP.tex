@@ -263,7 +263,7 @@ To run MAKEGEO, type:\\\\
 
 \subsection{CALETA}
 There is a requirement to switch from using ECMWF GRIB data to open-source prognostic met data. This is because the ECMWF data is only free to academic institutions, and so INETER would not be able to acquire this data going forward. Work is in progress to identify an alternative data source. This will likely also require the creation of a tool to read in this data and convert it to the 3D.dat file format expected by CALMET. This is preferred over developing CALETA itself to perform this task, which is currently only able to work on particular datasets (most of which are specific to US-region-only datasets).\\\\
-For completeness, below is information on how to build and run CALETA for using the ECMWF GRIB files
+For completeness, below is information on how to build, setup and run CALETA for using the ECMWF GRIB files
 \subsubsection{Build}
 To build the original source code:
 \begin{itemize}
@@ -276,6 +276,19 @@ To build the IMO version:
 \begin{itemize}
 \item Copy the files caleta.f, eta2m3d.blk and eta2m3d.cm1 from Mark's Caleta directory, and eta2m3d.par from Mark's RUN directory, into a clean directory and run the appropriate compilation command as above (ifort is preferred).
 \end{itemize}
+
+\subsubsection{Setup}
+Sara's input file for Caleta (eta2m3d.inp) contains the following 8 lines:
+\begin{lstlisting}
+M3D file Created from ETA AWIPS 212 Grid for Falconbridge CALMET 
+3  ! Flag to indicate ECMWF input data
+/path/to/GRIB/files/directory/
+/path/to/output/directory/
+eta2m3d.lst  ! list file name
+10.5,12.5  ! Range Lat
+272,275  ! Range Long
+1, 25  ! Vertical levels
+\end{lstlisting}
 
 \subsubsection{Run}
 To run the self-built IMO version:
