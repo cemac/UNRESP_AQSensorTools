@@ -5,8 +5,8 @@ Author: JO'N
 Date: March 2018
 Purpose: Download data from one AQMesh pod using their API tool
 Usage: ./getAQMeshData.py <startDate> <endDate> <variables> <outFreq>
-        <startDate> - Start date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS
-        <endDate> - End date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS
+        <startDate> - Start date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS. Or type 'start' to get data from the earliest possible time.
+        <endDate> - End date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS. Or type 'end' to get data from the latest possible time.
         <variables> - List of variables to download, in single quotes separated by spaces, e.g. 'NO PM10 SO2'. Or specify 'ALL' to download all variables
         <outFreq> - "Frequency of output files. Type 'all' for all data in one file, 'daily' for one calendar day per file, or 'monthly' for one calendar month per file
 Output: One or multiple csv data files (depending on chosen output frequency) with naming convention: AQMeshData_[dateRange]_[variables].csv
@@ -23,8 +23,8 @@ import os
 
 #####READ IN COMMAND LINE ARGUMENTS AND GET PYTHON DIRECTORY
 parser = argparse.ArgumentParser()
-parser.add_argument("startDate",help="Start date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2017-01-01T00:00:00",type=str)
-parser.add_argument("endDate",help="End date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2017-31-01T23:59:59",type=str)
+parser.add_argument("startDate",help="Start date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2017-01-01T00:00:00. Or type 'start' to get data from the earliest possible time.",type=str)
+parser.add_argument("endDate",help="End date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2017-31-01T23:59:59. Or type 'end' to get data from the latest possible time.",type=str)
 parser.add_argument("variables",help="List of variables to download, in single quotes separated by spaces, e.g. 'NO PM10 SO2'. Or specify 'ALL'\
 to download all variables. Full list of available variables: AIRPRES, HUM, NO, NO2, O3, PARTICULE_COUNT, PM1, PM10, PM2.5, PMTOTAL, SO2,\
   TEMP, VOLTAGE",type=str)
@@ -36,12 +36,6 @@ endDate=args.endDate
 variables=args.variables
 outFreq=args.outFreq
 pyDir = os.path.dirname(os.path.realpath(__file__))
-#
-#startDate="2018-01-01T12:00:00"
-#endDate="2018-02-05T01:00:00"
-#variables='NO PM10 SO2'
-#outFreq='monthly'
-#pyDir='/nfs/see-fs-01_users/earjjo/gitRepos/UNRESP/Python/'
 #####
 
 #####PARAMETERS
@@ -86,8 +80,22 @@ except:
     raise
 validStart=parse(rawJson[0]['FirstTETimestamp'])
 validEnd=parse(rawJson[0]['LastTBTimestamp'])
-start=pytz.utc.localize(parse(startDate))
-end=pytz.utc.localize(parse(endDate))
+if startDate=='start':
+    start=validStart
+else:
+    try:
+        start=pytz.utc.localize(parse(startDate))
+    except:
+        print("Could not interpret start date - check the format")
+        raise
+if endDate=='end':
+    end=validEnd
+else:
+    try:
+        end=pytz.utc.localize(parse(endDate))
+    except:
+        print("Could not interpret end date - check the format")
+        raise
 assert (start-validStart).seconds >= 0, "The start date/time must come after "+str(validStart)
 assert (validEnd-end).seconds >= 0, "The end date/time must come before "+str(validEnd)
 assert (end-start).seconds >= 0, "The start date/time must come before the end date/time"
@@ -117,6 +125,8 @@ for i in range(len(startDays)):
     if variables != 'ALL':
         url=url+"/"+varStr
     rawText = requests.get(url=url)
+    if rawText.text=='NO DATA WAS FOUND FOR YOUR GIVEN PARAMETERS':
+        continue
     rawJson = json.loads(rawText.text)
     rawDF = json_normalize(rawJson,record_path=['Channels'],meta=['TBTimestamp', 'TETimestamp'])
     procDF=rawDF.drop(['Channel'], axis=1) #Drop channel column
