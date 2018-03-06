@@ -1,3 +1,17 @@
+#!/usr/bin/env python
+"""
+Script name: getAQMeshData.py
+Author: JO'N
+Date: March 2018
+Purpose: Download data from one AQMesh pod using their API tool
+Usage: ./getAQMeshData.py <startDate> <endDate> <variables> <outFreq>
+        <startDate> - Start date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS
+        <endDate> - End date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS
+        <variables> - List of variables to download, in single quotes separated by spaces, e.g. 'NO PM10 SO2'. Or specify 'ALL' to download all variables
+        <outFreq> - "Frequency of output files. Type 'all' for all data in one file, 'daily' for one calendar day per file, or 'monthly' for one calendar month per file
+Output: One or multiple csv data files (depending on chosen output frequency) with naming convention: AQMeshData_[dateRange]_[variables].csv
+"""
+import pandas as pd
 from pandas.io.json import json_normalize
 import json
 import requests
@@ -6,28 +20,28 @@ import pytz
 import argparse
 import datetime as dt
 import os
-import pandas as pd
 
 #####READ IN COMMAND LINE ARGUMENTS AND GET PYTHON DIRECTORY
-#parser = argparse.ArgumentParser()
-#parser.add_argument("startDate",help="Start date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2017-01-01T00:00:00",type=str)
-#parser.add_argument("endDate",help="End date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2017-31-01T23:59:59",type=str)
-#parser.add_argument("variables",help="List of variables to download, in single quotes separated by spaces, e.g. 'NO PM10 SO2'. Or specify 'ALL'\
-#to download all variables. Full list of available variables: AIRPRES, HUM, NO, NO2, O3, PARTICULE_COUNT, PM1, PM10, PM2.5, PMTOTAL, SO2,\
-#  TEMP, VOLTAGE",type=str)
-#parser.add_argument("outFreq",help="Frequency of output files. Type 'all' to generate one output file containing all data,\
-# 'daily' to generate one output file per calendar day, or 'monthly' to generate one output file per calendar month",type=str)
-#args = parser.parse_args()
-#startDate=args.startDate
-#endDate=args.endDate
-#variables=args.variables
-#pyDir = os.path.dirname(os.path.realpath(__file__))
+parser = argparse.ArgumentParser()
+parser.add_argument("startDate",help="Start date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2017-01-01T00:00:00",type=str)
+parser.add_argument("endDate",help="End date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2017-31-01T23:59:59",type=str)
+parser.add_argument("variables",help="List of variables to download, in single quotes separated by spaces, e.g. 'NO PM10 SO2'. Or specify 'ALL'\
+to download all variables. Full list of available variables: AIRPRES, HUM, NO, NO2, O3, PARTICULE_COUNT, PM1, PM10, PM2.5, PMTOTAL, SO2,\
+  TEMP, VOLTAGE",type=str)
+parser.add_argument("outFreq",help="Frequency of output files. Type 'all' to generate one output file containing all data,\
+ 'daily' to generate one output file per calendar day, or 'monthly' to generate one output file per calendar month",type=str)
+args = parser.parse_args()
+startDate=args.startDate
+endDate=args.endDate
+variables=args.variables
+outFreq=args.outFreq
+pyDir = os.path.dirname(os.path.realpath(__file__))
 #
-startDate="2018-01-01T12:00:00"
-endDate="2018-02-05T01:00:00"
-variables='NO PM10 SO2'
-outFreq='monthly'
-pyDir='/nfs/see-fs-01_users/earjjo/gitRepos/UNRESP/Python/'
+#startDate="2018-01-01T12:00:00"
+#endDate="2018-02-05T01:00:00"
+#variables='NO PM10 SO2'
+#outFreq='monthly'
+#pyDir='/nfs/see-fs-01_users/earjjo/gitRepos/UNRESP/Python/'
 #####
 
 #####PARAMETERS
@@ -74,15 +88,15 @@ validStart=parse(rawJson[0]['FirstTETimestamp'])
 validEnd=parse(rawJson[0]['LastTBTimestamp'])
 start=pytz.utc.localize(parse(startDate))
 end=pytz.utc.localize(parse(endDate))
-assert (start-validStart).seconds >+ 0, "The start date/time must come after "+str(validStart)
+assert (start-validStart).seconds >= 0, "The start date/time must come after "+str(validStart)
 assert (validEnd-end).seconds >= 0, "The end date/time must come before "+str(validEnd)
 assert (end-start).seconds >= 0, "The start date/time must come before the end date/time"
 #####
 
 #####SPLIT TIME RANGE INTO DAYS FOR DOWNLOAD
 startDay = dt.datetime(start.year,start.month,start.day,tzinfo=pytz.UTC)
-dateDays = [start]
 nextDay = startDay + dt.timedelta(days=1)
+dateDays = [start]
 while nextDay < end:
     dateDays.append(nextDay)
     nextDay+=dt.timedelta(days=1)
@@ -105,9 +119,9 @@ for i in range(len(startDays)):
     rawText = requests.get(url=url)
     rawJson = json.loads(rawText.text)
     rawDF = json_normalize(rawJson,record_path=['Channels'],meta=['TBTimestamp', 'TETimestamp'])
-    procDF=rawDF.drop(['Channel'], axis=1)
-    procDF=procDF[colOrder]
-    procDF=procDF.reindex(index=procDF.index[::-1])
+    procDF=rawDF.drop(['Channel'], axis=1) #Drop channel column
+    procDF=procDF[colOrder] #Reorder columns
+    procDF=procDF.reindex(index=procDF.index[::-1]) #flip row so oldest date first
     if outFreq=='daily':
         fname='AQMeshData_'+startDays[i].strftime('%Y-%m-%d')+'_'+varStr+'.csv'
         print('Writing data to file '+fname)
