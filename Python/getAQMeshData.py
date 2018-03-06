@@ -6,6 +6,7 @@ import pytz
 import argparse
 import datetime as dt
 import os
+import pandas as pd
 
 #####READ IN COMMAND LINE ARGUMENTS AND GET PYTHON DIRECTORY
 #parser = argparse.ArgumentParser()
@@ -23,7 +24,7 @@ import os
 startDate="2018-01-01T12:00:00"
 endDate="2018-01-05T01:00:00"
 variables='NO PM10 SO2'
-pyDir='/nfs/see-fs-01_users/earjjo/OneDrive/UNRESP/Python/'
+pyDir='/nfs/see-fs-01_users/earjjo/gitRepos/UNRESP/Python/'
 #####
 
 #####PARAMETERS
@@ -85,18 +86,22 @@ startDaysStr=[t.strftime('%Y-%m-%dT%H:%M:%S') for t in startDays]
 endDaysStr=[t.strftime('%Y-%m-%dT%H:%M:%S') for t in endDays]
 
 #####LOAD IN DATA
-url = "https://api.airmonitors.net/3.5/GET/"+accountID+"/"+licenceKey+"/stationdata/"+startDate+"/"+endDate+"/"+stationID
-if variables != 'ALL':
-    url=url+"/"+'-'.join(vars)
-rawText = requests.get(url=url)
-rawJson = json.loads(rawText.text)
-rawDF = json_normalize(rawJson,record_path=['Channels'],meta=['TBTimestamp', 'TETimestamp'])
-procDF=rawDF.drop(['Channel'], axis=1)
-procDF=procDF[colOrder]
-procDF=procDF.reindex(index=procDF.index[::-1])
+allData=pd.DataFrame(columns=colOrder)
+for i in range(len(startDaysStr)):
+    print('downloading data from '+startDays[i].strftime('%Y-%m-%d'))
+    url = "https://api.airmonitors.net/3.5/GET/"+accountID+"/"+licenceKey+"/stationdata/"+startDaysStr[i]+"/"+endDaysStr[i]+"/"+stationID
+    if variables != 'ALL':
+        url=url+"/"+'-'.join(vars)
+    rawText = requests.get(url=url)
+    rawJson = json.loads(rawText.text)
+    rawDF = json_normalize(rawJson,record_path=['Channels'],meta=['TBTimestamp', 'TETimestamp'])
+    procDF=rawDF.drop(['Channel'], axis=1)
+    procDF=procDF[colOrder]
+    procDF=procDF.reindex(index=procDF.index[::-1])
+    allData=allData.append(procDF)
 #parseTE=[parse(t) for t in procDF['TETimestamp']]
 #parseTB=[parse(t) for t in procDF['TBTimestamp']]
 #####
 
 #####SAVE TO CSV
-procDF.to_csv(os.path.join(pyDir,'test.csv'),index=False)
+allData.to_csv(os.path.join(pyDir,'test.csv'),index=False)
