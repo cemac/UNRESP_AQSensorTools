@@ -6,18 +6,26 @@ def writeRec2():
     fout.write("Currently set up to process GRIB data file from NAM's Central American/Caribbean domain\n")
 
 def writeRec3():
+    #Flags for: vertical velocity, RH, cloud/rain MR, ice/snow MR, graupel MR, surface 2D files created
     fout.write(('{:3d}'*6+'\n').format(1,1,0,0,0,0))
 
 def writeRec4():
-    cenLat=(lats[iLatMinGRIB]+lats[iLatMaxGRIB])/2.
-    cenLon=(lons[iLonMinGRIB]+lons[iLonMaxGRIB])/2.
-    firstTrueLat=lats[iLatMinGRIB]
-    secondTrueLat=lats[iLatMinGRIB+1]
-    NX=iLonMaxGRIB-iLonMinGRIB+1
-    NY=iLatMaxGRIB-iLatMinGRIB+1
-    NZ=len(levsIncl)
+    cenLat=(lats[iLatMinGRIB]+lats[iLatMaxGRIB])/2. #centre latitude of GRIB subset grid
+    cenLon=(lons[iLonMinGRIB]+lons[iLonMaxGRIB])/2. #centre longitude of GRIB subset grid
+    firstTrueLat=lats[iLatMinGRIB] #First latitude in GRIB subset grid
+    secondTrueLat=lats[iLatMinGRIB+1] #Second latitude in GRIB subset grid
+    SWdotX=0.0 #Not used so set to zero
+    SWdotY=0.0 #Not used so set to zero
+    DXY=0.0 #Not used so set to zero
+    NX=iLonMaxGRIB-iLonMinGRIB+1 #NX, i.e. number of longitudes in GRIB subset grid
+    NY=iLatMaxGRIB-iLatMinGRIB+1 #NY, i.e. number of latitudes in GRIB subset grid
+    NZ=len(levsIncl) #NZ, i.e. number of levels to be extracted from GRIB subset grid
     fout.write(('{:4}{:9.4f}{:10.4f}{:7.2f}{:7.2f}{:10.3f}{:10.3f}{:8.3f}{:4d}{:4d}{:3d}\n').
-               format('LLC',cenLat,cenLon,firstTrueLat,secondTrueLat,0.0,0.0,0.0,NX,NY,NZ))
+               format('LLC',cenLat,cenLon,firstTrueLat,secondTrueLat,SWdotX,SWdotY,DXY,NX,NY,NZ))
+
+def writeRec5():
+    #Flags that aren't used unless using MM5 model
+    fout.write(('{:3d}'*23+'\n').format(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0))
 
 
 import sys
@@ -96,6 +104,7 @@ writeRec1()
 writeRec2()
 writeRec3()
 writeRec4()
+writeRec5()
 
 #####CLOSE OUTPUT FILE
 fout.close()
