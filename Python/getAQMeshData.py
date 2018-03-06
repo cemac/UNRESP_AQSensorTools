@@ -14,7 +14,9 @@ import pandas as pd
 #parser.add_argument("endDate",help="End date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2017-31-01T23:59:59",type=str)
 #parser.add_argument("variables",help="List of variables to download, in single quotes separated by spaces, e.g. 'NO PM10 SO2'. Or specify 'ALL'\
 #to download all variables. Full list of available variables: AIRPRES, HUM, NO, NO2, O3, PARTICULE_COUNT, PM1, PM10, PM2.5, PMTOTAL, SO2,\
-#TEMP, VOLTAGE",type=str)
+#  TEMP, VOLTAGE",type=str)
+#parser.add_argument("outFreq",help="Frequency of output files. Type 'all' to generate one output file containing all data,\
+#  or 'daily' to generate one output file per calendar day",type=str)
 #args = parser.parse_args()
 #startDate=args.startDate
 #endDate=args.endDate
@@ -24,10 +26,12 @@ import pandas as pd
 startDate="2018-01-01T12:00:00"
 endDate="2018-01-05T01:00:00"
 variables='NO PM10 SO2'
+outFreq='all'
 pyDir='/nfs/see-fs-01_users/earjjo/gitRepos/UNRESP/Python/'
 #####
 
 #####PARAMETERS
+allFreqs=['all','daily']
 allVars=['AIRPRES', 'HUM', 'NO', 'NO2', 'O3', 'PARTICULE_COUNT', 'PM1', 'PM10', 'PM2.5', 'PMTOTAL', 'SO2', 'TEMP', 'VOLTAGE']
 colOrder=['TBTimestamp','TETimestamp','SensorLabel','SensorName','PreScaled','Slope','Offset','Scaled','UnitName','Status']
 #####
@@ -46,10 +50,16 @@ f.close()
 #####CHECK VARIABLES
 if variables=='ALL':
     vars = allVars
+    varStr='AllVars'
 else:
     vars = [s for s in variables.split()]
     for v in vars:
-        assert v in allVars, "variable name "+v+" not valid. Full list of available variables: "+str(allVars)
+        assert v in allVars, "Variable name '"+v+"' not valid. Full list of available variables: "+str(allVars)
+    varStr='-'.join(vars)
+#####
+
+#####CHECK OUTPUT FREQUENCY
+assert outFreq in allFreqs, "Output frequency '"+outFreq+"' not valid. List of available options: "+str(allFreqs)
 #####
 
 #####GET VALID TIME RANGE AND CHECK START/END DATES
@@ -85,23 +95,25 @@ if(len(endDays)>1):
 startDaysStr=[t.strftime('%Y-%m-%dT%H:%M:%S') for t in startDays]
 endDaysStr=[t.strftime('%Y-%m-%dT%H:%M:%S') for t in endDays]
 
-#####LOAD IN DATA
+#####LOAD IN DATA AND WRITE TO CSV
 allData=pd.DataFrame(columns=colOrder)
 for i in range(len(startDaysStr)):
     print('downloading data from '+startDays[i].strftime('%Y-%m-%d'))
     url = "https://api.airmonitors.net/3.5/GET/"+accountID+"/"+licenceKey+"/stationdata/"+startDaysStr[i]+"/"+endDaysStr[i]+"/"+stationID
     if variables != 'ALL':
-        url=url+"/"+'-'.join(vars)
+        url=url+"/"+varStr
     rawText = requests.get(url=url)
     rawJson = json.loads(rawText.text)
     rawDF = json_normalize(rawJson,record_path=['Channels'],meta=['TBTimestamp', 'TETimestamp'])
     procDF=rawDF.drop(['Channel'], axis=1)
     procDF=procDF[colOrder]
     procDF=procDF.reindex(index=procDF.index[::-1])
-    allData=allData.append(procDF)
-#parseTE=[parse(t) for t in procDF['TETimestamp']]
-#parseTB=[parse(t) for t in procDF['TBTimestamp']]
+    if outFreq=='daily':
+        fname='AQMeshData_'+startDays[i].strftime('%Y-%m-%d')+'_'+varStr+'.csv'
+        procDF.to_csv(os.path.join(pyDir,fname),index=False)
+    else:
+        allData=allData.append(procDF)
+if outFreq=='all':
+    fname='AQMeshData_'+start.strftime('%Y-%m-%dT%H-%M-%S')+'_to_'+end.strftime('%Y-%m-%dT%H-%M-%S')+'_'+varStr+'.csv'
+    allData.to_csv(os.path.join(pyDir,fname),index=False)
 #####
-
-#####SAVE TO CSV
-allData.to_csv(os.path.join(pyDir,'test.csv'),index=False)
