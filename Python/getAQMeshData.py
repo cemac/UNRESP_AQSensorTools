@@ -16,7 +16,7 @@ import pandas as pd
 #to download all variables. Full list of available variables: AIRPRES, HUM, NO, NO2, O3, PARTICULE_COUNT, PM1, PM10, PM2.5, PMTOTAL, SO2,\
 #  TEMP, VOLTAGE",type=str)
 #parser.add_argument("outFreq",help="Frequency of output files. Type 'all' to generate one output file containing all data,\
-#  or 'daily' to generate one output file per calendar day",type=str)
+# 'daily' to generate one output file per calendar day, or 'monthly' to generate one output file per calendar month",type=str)
 #args = parser.parse_args()
 #startDate=args.startDate
 #endDate=args.endDate
@@ -24,14 +24,14 @@ import pandas as pd
 #pyDir = os.path.dirname(os.path.realpath(__file__))
 #
 startDate="2018-01-01T12:00:00"
-endDate="2018-01-05T01:00:00"
+endDate="2018-02-05T01:00:00"
 variables='NO PM10 SO2'
-outFreq='all'
+outFreq='monthly'
 pyDir='/nfs/see-fs-01_users/earjjo/gitRepos/UNRESP/Python/'
 #####
 
 #####PARAMETERS
-allFreqs=['all','daily']
+allFreqs=['all','daily','monthly']
 allVars=['AIRPRES', 'HUM', 'NO', 'NO2', 'O3', 'PARTICULE_COUNT', 'PM1', 'PM10', 'PM2.5', 'PMTOTAL', 'SO2', 'TEMP', 'VOLTAGE']
 colOrder=['TBTimestamp','TETimestamp','SensorLabel','SensorName','PreScaled','Slope','Offset','Scaled','UnitName','Status']
 #####
@@ -97,8 +97,8 @@ endDaysStr=[t.strftime('%Y-%m-%dT%H:%M:%S') for t in endDays]
 
 #####LOAD IN DATA AND WRITE TO CSV
 allData=pd.DataFrame(columns=colOrder)
-for i in range(len(startDaysStr)):
-    print('downloading data from '+startDays[i].strftime('%Y-%m-%d'))
+for i in range(len(startDays)):
+    print('Downloading data from '+startDays[i].strftime('%Y-%m-%d'))
     url = "https://api.airmonitors.net/3.5/GET/"+accountID+"/"+licenceKey+"/stationdata/"+startDaysStr[i]+"/"+endDaysStr[i]+"/"+stationID
     if variables != 'ALL':
         url=url+"/"+varStr
@@ -110,10 +110,17 @@ for i in range(len(startDaysStr)):
     procDF=procDF.reindex(index=procDF.index[::-1])
     if outFreq=='daily':
         fname='AQMeshData_'+startDays[i].strftime('%Y-%m-%d')+'_'+varStr+'.csv'
+        print('Writing data to file '+fname)
         procDF.to_csv(os.path.join(pyDir,fname),index=False)
     else:
         allData=allData.append(procDF)
+    if outFreq=='monthly' and (startDays[i].month != (startDays[i]+dt.timedelta(days=1)).month or i==len(startDays)-1):
+        fname='AQMeshData_'+startDays[i].strftime('%Y-%m')+'_'+varStr+'.csv'
+        print('Writing data to file '+fname)
+        allData.to_csv(os.path.join(pyDir,fname),index=False)
+        allData=pd.DataFrame(columns=colOrder)
 if outFreq=='all':
     fname='AQMeshData_'+start.strftime('%Y-%m-%dT%H-%M-%S')+'_to_'+end.strftime('%Y-%m-%dT%H-%M-%S')+'_'+varStr+'.csv'
+    print('Writing data to file '+fname)
     allData.to_csv(os.path.join(pyDir,fname),index=False)
 #####
