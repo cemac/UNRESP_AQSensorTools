@@ -3,7 +3,7 @@
 Script name: getAQMeshData.py
 Author: JO'N
 Date: March 2018
-Purpose: Download data from one AQMesh pod using their API tool
+Purpose: Download data from an AQMesh pod using the API tool
 Usage: ./getAQMeshData.py <startDate> <endDate> <variables> <outFreq>
         <startDate> - Start date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS. Or type 'start' to get data from the earliest possible time.
         <endDate> - End date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS. Or type 'end' to get data from the latest possible time.
@@ -22,9 +22,9 @@ import datetime as dt
 import os
 
 #####READ IN COMMAND LINE ARGUMENTS AND GET PYTHON DIRECTORY
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description="Script to download data from an AQMesh pod using the API tool")
 parser.add_argument("startDate",help="Start date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2017-01-01T00:00:00. Or type 'start' to get data from the earliest possible time.",type=str)
-parser.add_argument("endDate",help="End date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2017-31-01T23:59:59. Or type 'end' to get data from the latest possible time.",type=str)
+parser.add_argument("endDate",help="End date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2017-31-01T23:59:59. Or type 'end' to get data up to the latest possible time.",type=str)
 parser.add_argument("variables",help="List of variables to download, in single quotes separated by spaces, e.g. 'NO PM10 SO2'. Or specify 'ALL'\
 to download all variables. Full list of available variables: AIRPRES, HUM, NO, NO2, O3, PARTICULE_COUNT, PM1, PM10, PM2.5, PMTOTAL, SO2,\
   TEMP, VOLTAGE",type=str)
