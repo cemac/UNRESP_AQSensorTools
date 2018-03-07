@@ -92,6 +92,9 @@ def writeRec9():
             for i in range(NX): 
                 IX=i+1 #i-index of grid cell
                 fout.write(('{:4d}'+'{:02d}'*3+'{:3d}'*2+'{:7.1f}{:5.2f}{:2d}'+'{:8.1f}'*2+'\n').format(MYR,MMO,MDAY,MHR,IX,JX,PRES,RAIN,SC,RADSW,RADLW))
+#                for k in range(NZ):
+#                    PRES2=np.flipud(np.array(levsIncl))[k]
+                    
    
 
 import sys
@@ -102,7 +105,8 @@ import gribapi
 import numpy as np
 from dateutil.parser import parse
 import datetime as dt
-
+import matplotlib.pyplot as plt
+from mpl_toolkits.basemap import Basemap
 
 #####PARAMETERS
 startDate='20180306'
@@ -179,6 +183,22 @@ NX=iLonMaxGRIB-iLonMinGRIB+1 #NX, i.e. number of longitudes in GRIB subset grid
 NY=iLatMaxGRIB-iLatMinGRIB+1 #NY, i.e. number of latitudes in GRIB subset grid
 NZ=len(levsIncl) #NZ, i.e. number of levels to be extracted from GRIB subset grid
 #####
+
+
+###PLOT A MESSAGE
+#gidPlot=gidMSLP#gidU[-1]
+#Ni=gribapi.grib_get(gidPlot,'Ni')
+#Nj=gribapi.grib_get(gidPlot,'Nj')
+#missingValue=gribapi.grib_get(gidPlot,"missingValue")
+#values=gribapi.grib_get_values(gidPlot)
+#msg=np.reshape(values,(Nj,Ni),'C')
+#msgmasked = np.ma.masked_values(msg,missingValue)
+#xx,yy=np.meshgrid(lons,lats)
+#map = Basemap(llcrnrlon=250,llcrnrlat=-10,urcrnrlon=310,urcrnrlat=40)
+#map.drawcoastlines()
+#map.drawcountries()
+#map.contourf(xx,yy,msgmasked)
+#plt.show()
 
 #####RELEASE ALL MESSAGES
 for i in range(mcount):
