@@ -59,6 +59,20 @@ def writeRec7():
     for s in SIGMA:
         fout.write('{:6.3f}\n'.format(s))
 
+def writeRec8():
+    IELEVDOT=0 #terrain elevation above MSL (m). Set to zero for now to replicate Sara's file
+    ILAND=-9 #Lansuse categories (set to -9 to replicae Sara's file)
+    XLATCRS=-999
+    XLONGCRS=-999
+    IELEVCRS=-999
+    for j in range(NY):
+        JINDEX=j+1
+        XLATDOT=lats[iLatMinGRIB+j]
+        for i in range(NX): 
+            IINDEX=i+1
+            XLONGDOT=lons[iLonMinGRIB+i]
+            fout.write(('{:4d}'*2+'{:9.4f}{:10.4f}{:5d}{:3d} {:9.4f}{:10.4f}{:5d}\n').format(IINDEX,JINDEX,XLATDOT,XLONGDOT,IELEVDOT,ILAND,XLATCRS,XLONGCRS,IELEVCRS))
+
 import sys
 import os
 #Ensure most recent eccodes python packages are used
@@ -160,6 +174,7 @@ writeRec4()
 writeRec5()
 writeRec6()
 writeRec7()
+writeRec8()
 
 #####CLOSE OUTPUT FILE
 fout.close()
