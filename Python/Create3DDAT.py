@@ -57,7 +57,7 @@ def writeRec7():
     RYMIN=lats[iLatMinGRIB]
     RYMAX=lats[iLatMaxGRIB]
     fout.write(('{:4d}'*6+'{:10.4f}'*2+'{:9.4f}'*2+'\n').format(NX1,NY1,NX2,NY2,NZ1,NZ2,RXMIN,RXMAX,RYMIN,RYMAX))
-    SIGMA=np.flipud(np.array(levsIncl))/1013.25
+    SIGMA=np.flipud(levsIncl)/1013.25
     for s in SIGMA:
         fout.write('{:6.3f}\n'.format(s))
 
@@ -82,21 +82,44 @@ def writeRec9():
     RADSW=0.0 #SW radiation at surface (replicate Sara's file)
     RADLW=0.0 #LW radiation at top (replicate Sara's file)
     for t in range(17):
+        print("Processing file "+filenames[t])
         dateTime=parse(startDate)+dt.timedelta(hours=t*3)
         MYR=dateTime.year #Year of data block
         MMO=dateTime.month #Month of data block
         MDAY=dateTime.day #Day of data block
         MHR=dateTime.hour #Hour of data block
+        #####
+        f=open(filePaths[t],'r')
+        gribapi.grib_multi_support_on()
+        mcount = gribapi.grib_count_in_file(f) #number of messages in file
+        gids = [gribapi.grib_new_from_file(f) for i in range(mcount)]
+        f.close()
+        #
+        varNames=[]
+        levels=[]
+        for i in range(mcount):
+            gid = gids[i]
+            varNames.append(gribapi.grib_get(gid,'shortName'))
+            levels.append(gribapi.grib_get(gid,'level'))
+        #
+        gidHGT=np.flipud([i+1 for i in range(len(varNames)) if (varNames[i] == 'gh' and levels[i] in levsIncl)])
+        #####
         for j in range(NY):
             JX=j+1 #J-index of grid cell
             for i in range(NX): 
                 IX=i+1 #i-index of grid cell
                 fout.write(('{:4d}'+'{:02d}'*3+'{:3d}'*2+'{:7.1f}{:5.2f}{:2d}'+'{:8.1f}'*2+'\n').format(MYR,MMO,MDAY,MHR,IX,JX,PRES,RAIN,SC,RADSW,RADLW))
-#                for k in range(NZ):
-#                    PRES2=np.flipud(np.array(levsIncl))[k]
+                for k in range(NZ):
+                    HGTvals=gribapi.grib_get_values(gidHGT[k])
+                    HGTgrd=np.reshape(HGTvals,(Nj,Ni),'C')
+                    #
+                    PRES2=np.flipud(levsIncl)[k] #Pressure (mb)
+                    Z=int(HGTgrd[iLatMinGRIB+j,iLonMinGRIB+i]) #Elevation (m above sea level)
+                    fout.write(('{:4d}{:6d}\n').format(PRES2,Z))
+        #
+        for i in range(mcount):
+            gribapi.grib_release(i+1)
                     
-   
-
 import sys
 import os
 #Ensure most recent eccodes python packages are used
@@ -147,16 +170,19 @@ for i in range(mcount):
 #####
 
 #####GET REQUIRED GIDS
-gidMSLP=varNames.index("prmsl")+1
+gidPRMSL=varNames.index("prmsl")+1
+gidHGT=[i+1 for i in range(len(varNames)) if (varNames[i] == 'gh' and levels[i] in levsIncl)]
 #gidU10=varNames.index("10u")+1
 #gidV10=varNames.index("10v")+1
 gidU=[i+1 for i in range(len(varNames)) if (varNames[i] == 'u' and levels[i] in levsIncl)]
 #gidV=[i+1 for i in range(len(varNames)) if varNames[i] == 'u']
 #####
 
-#####GET LATS AND LONS
-lats=gribapi.grib_get_array(gidMSLP,'distinctLatitudes')
-lons=gribapi.grib_get_array(gidMSLP,'distinctLongitudes')
+#####GET LATS, LONS, ETC
+lats=gribapi.grib_get_array(gidPRMSL,'distinctLatitudes')
+lons=gribapi.grib_get_array(gidPRMSL,'distinctLongitudes')
+Ni=gribapi.grib_get(gidPRMSL,'Ni')
+Nj=gribapi.grib_get(gidPRMSL,'Nj')
 #####
 
 #####DETERMINE SUBDOMAIN INDICES
@@ -186,7 +212,7 @@ NZ=len(levsIncl) #NZ, i.e. number of levels to be extracted from GRIB subset gri
 
 
 ###PLOT A MESSAGE
-#gidPlot=gidMSLP#gidU[-1]
+#gidPlot=gidHGT[-2]
 #Ni=gribapi.grib_get(gidPlot,'Ni')
 #Nj=gribapi.grib_get(gidPlot,'Nj')
 #missingValue=gribapi.grib_get(gidPlot,"missingValue")
@@ -197,7 +223,8 @@ NZ=len(levsIncl) #NZ, i.e. number of levels to be extracted from GRIB subset gri
 #map = Basemap(llcrnrlon=250,llcrnrlat=-10,urcrnrlon=310,urcrnrlat=40)
 #map.drawcoastlines()
 #map.drawcountries()
-#map.contourf(xx,yy,msgmasked)
+#cs=map.contourf(xx,yy,msgmasked)
+#map.colorbar(cs)
 #plt.show()
 
 #####RELEASE ALL MESSAGES
@@ -229,8 +256,8 @@ fout.close()
 
 
 ##Get MSLP field
-#iterid=gribapi.grib_iterator_new(gidMSLP,0)
-#missingValue=gribapi.grib_get_double(gidMSLP,"missingValue")
+#iterid=gribapi.grib_iterator_new(gidPRMSL,0)
+#missingValue=gribapi.grib_get_double(gidPRMSL,"missingValue")
 #while 1:
 #    result=gribapi.grib_iterator_next(iterid)
 #    if not result: break
