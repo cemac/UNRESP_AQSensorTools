@@ -1,14 +1,16 @@
 def writeRec1():
-    DATASET='3D.DAT' #Dataset name
-    DATAVER='2.1' #Dataset version
-    DATAMOD='Created using Create3DDAT.py' #Dataset message field
-    fout.write('{:16}{:16}{}\n'.format(DATASET,DATAVER,DATAMOD))
+#    DATASET='3D.DAT' #Dataset name
+#    DATAVER='2.1' #Dataset version
+#    DATAMOD='Created using Create3DDAT.py' #Dataset message field
+#    fout.write('{:16}{:16}{}\n'.format(DATASET,DATAVER,DATAMOD))
+     fout.write('M3D file Created from ETA AWIPS 212 Grid for Falconbridge CALMET\n') #just replicate Sara's data file for now
 
 def writeRec2():
-    NCOMM=1 #Number of comment records to follow
-    fout.write('{:1d}\n'.format(NCOMM))
-    COMMENT="Currently set up to process GRIB data file from NAM's Central American/Caribbean domain" #Comments
-    fout.write('{}\n'.format(COMMENT))
+#    NCOMM=1 #Number of comment records to follow
+#    fout.write('{:1d}\n'.format(NCOMM))
+#    COMMENT="Currently set up to process GRIB data file from NAM's Central American/Caribbean domain" #Comments
+#    fout.write('{}\n'.format(COMMENT))
+     fout.write('MM53D.DAT   1.0         020715      \n') #just replicate Sara's data file for now
 
 def writeRec3():
     IOUTW=1 #Vertical velocity flag
@@ -73,12 +75,33 @@ def writeRec8():
             XLONGDOT=lons[iLonMinGRIB+i]
             fout.write(('{:4d}'*2+'{:9.4f}{:10.4f}{:5d}{:3d} {:9.4f}{:10.4f}{:5d}\n').format(IINDEX,JINDEX,XLATDOT,XLONGDOT,IELEVDOT,ILAND,XLATCRS,XLONGCRS,IELEVCRS))
 
+def writeRec9():
+    PRES=1013.0 #Sea level presure (replicate Sara's file)
+    RAIN=0.0 #total accumulated rainfall from past hour (replicate Sara's file)
+    SC=0 #snow cover
+    RADSW=0.0 #SW radiation at surface (replicate Sara's file)
+    RADLW=0.0 #LW radiation at top (replicate Sara's file)
+    for t in range(17):
+        dateTime=parse(startDate)+dt.timedelta(hours=t*3)
+        MYR=dateTime.year #Year of data block
+        MMO=dateTime.month #Month of data block
+        MDAY=dateTime.day #Day of data block
+        MHR=dateTime.hour #Hour of data block
+        for j in range(NY):
+            JX=j+1 #J-index of grid cell
+            for i in range(NX): 
+                IX=i+1 #i-index of grid cell
+                fout.write(('{:4d}'+'{:02d}'*3+'{:3d}'*2+'{:7.1f}{:5.2f}{:2d}'+'{:8.1f}'*2+'\n').format(MYR,MMO,MDAY,MHR,IX,JX,PRES,RAIN,SC,RADSW,RADLW))
+   
+
 import sys
 import os
 #Ensure most recent eccodes python packages are used
 sys.path.insert(1,os.getenv("HOME")+'/SW/eccodes-2.6.0/lib/python2.7/site-packages')
 import gribapi
 import numpy as np
+from dateutil.parser import parse
+import datetime as dt
 
 
 #####PARAMETERS
@@ -175,6 +198,7 @@ writeRec5()
 writeRec6()
 writeRec7()
 writeRec8()
+writeRec9()
 
 #####CLOSE OUTPUT FILE
 fout.close()
