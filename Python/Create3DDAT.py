@@ -25,7 +25,23 @@ def writeRec5():
     fout.write(('{:3d}'*23+'\n').format(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0))
 
 def writeRec6():
-    fout.write('{:10}{:5d}{:4d}{:4d}{:4d}'.format(startDate+'00',16,NX,NY,NZ))
+    fout.write('{:10}{:5d}{:4d}{:4d}{:4d}\n'.format(startDate+'00',16,NX,NY,NZ))
+    
+def writeRec7():
+    NX1=1
+    NY1=1
+    NX2=NX
+    NY2=NY
+    NZ1=1
+    NZ2=NZ
+    RXMIN=lons[iLonMinGRIB]
+    RXMAX=lons[iLonMaxGRIB]
+    RYMIN=lats[iLatMinGRIB]
+    RYMAX=lats[iLatMaxGRIB]
+    fout.write(('{:4d}'*6+'{:10.4f}'*2+'{:9.4f}'*2+'\n').format(NX1,NY1,NX2,NY2,NZ1,NZ2,RXMIN,RXMAX,RYMIN,RYMAX))
+    SIGMA=np.flipud(np.array(levsIncl))/1013.25
+    for s in SIGMA:
+        fout.write('{:6.3f}\n'.format(s))
 
 import sys
 import os
@@ -127,6 +143,7 @@ writeRec3()
 writeRec4()
 writeRec5()
 writeRec6()
+writeRec7()
 
 #####CLOSE OUTPUT FILE
 fout.close()
