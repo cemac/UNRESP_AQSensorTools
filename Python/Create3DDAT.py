@@ -17,9 +17,6 @@ def writeRec4():
     SWdotX=0.0 #Not used so set to zero
     SWdotY=0.0 #Not used so set to zero
     DXY=0.0 #Not used so set to zero
-    NX=iLonMaxGRIB-iLonMinGRIB+1 #NX, i.e. number of longitudes in GRIB subset grid
-    NY=iLatMaxGRIB-iLatMinGRIB+1 #NY, i.e. number of latitudes in GRIB subset grid
-    NZ=len(levsIncl) #NZ, i.e. number of levels to be extracted from GRIB subset grid
     fout.write(('{:4}{:9.4f}{:10.4f}{:7.2f}{:7.2f}{:10.3f}{:10.3f}{:8.3f}{:4d}{:4d}{:3d}\n').
                format('LLC',cenLat,cenLon,firstTrueLat,secondTrueLat,SWdotX,SWdotY,DXY,NX,NY,NZ))
 
@@ -27,6 +24,8 @@ def writeRec5():
     #Flags that aren't used unless using MM5 model
     fout.write(('{:3d}'*23+'\n').format(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0))
 
+def writeRec6():
+    fout.write('{:10}{:5d}{:4d}{:4d}{:4d}'.format(startDate+'00',16,NX,NY,NZ))
 
 import sys
 import os
@@ -37,17 +36,28 @@ import numpy as np
 
 
 #####PARAMETERS
+startDate='20180306'
 latMinCP=11.7 #Min lat of CALPUFF grid
 latMaxCP=12.2 #Max lat of CALPUFF grid
 lonMinCP=273.2 #Min lon of CALPUFF grid
 lonMaxCP=274.1 #Max lon of CALPUFF grid
+inDir=os.getenv("HOME")+'/UNRESP_ndrive/Data/NAM_20180306'
 outFile=os.getenv("HOME")+'/Data/UNRESP/3D.DAT'
 levsIncl=[2,5,7,10,20,30,50,75,100,150,200,250,300,400,500,600,700,800,850,900,925,950,1000]
 #####
 
-#####OPEN GRIB FILE, GET MESSAGE HANDLERS AND CLOSE
-INPUT=os.getenv("HOME")+'/Data/UNRESP/nam.t00z.afwaca00.tm00.grib2'
-f=open(INPUT,'r')
+#####SET FILENAMES
+filePrefix='nam.t00z.afwaca'
+fileSuffix='.tm00.grib2'
+filenames=[]
+filePaths=[]
+for i in range(17):
+    filenames.append(filePrefix+'{:02d}'.format(i*3)+fileSuffix)
+    filePaths.append(os.path.join(inDir,filenames[i]))
+#####
+
+#####OPEN FIRST GRIB FILE, GET MESSAGE HANDLERS AND CLOSE
+f=open(filePaths[0],'r')
 gribapi.grib_multi_support_on()
 mcount = gribapi.grib_count_in_file(f) #number of messages in file
 gids = [gribapi.grib_new_from_file(f) for i in range(mcount)]
@@ -76,7 +86,7 @@ lats=gribapi.grib_get_array(gidMSLP,'distinctLatitudes')
 lons=gribapi.grib_get_array(gidMSLP,'distinctLongitudes')
 #####
 
-#####DETERMINE SUBSET INDICES
+#####DETERMINE SUBDOMAIN INDICES
 for i in range(len(lats)-1):
     if lats[i+1] >= latMinCP:
         iLatMinGRIB=i
@@ -93,7 +103,18 @@ for i in range(len(lons)-1):
     if lons[i+1] > lonMaxCP:
         iLonMaxGRIB=i+1
         break
-#####  
+#####
+
+#####SET SUBDOMAIN SIZE
+NX=iLonMaxGRIB-iLonMinGRIB+1 #NX, i.e. number of longitudes in GRIB subset grid
+NY=iLatMaxGRIB-iLatMinGRIB+1 #NY, i.e. number of latitudes in GRIB subset grid
+NZ=len(levsIncl) #NZ, i.e. number of levels to be extracted from GRIB subset grid
+#####
+
+#####RELEASE ALL MESSAGES
+for i in range(mcount):
+    gribapi.grib_release(i+1)
+#####
 
 #####OPEN OUTPUT FILE
 fout=open(outFile,'w')
@@ -105,15 +126,13 @@ writeRec2()
 writeRec3()
 writeRec4()
 writeRec5()
+writeRec6()
 
 #####CLOSE OUTPUT FILE
 fout.close()
 #####
 
-#####RELEASE ALL MESSAGES
-for i in range(mcount):
-    gribapi.grib_release(i+1)
-#####
+
 
 
 
