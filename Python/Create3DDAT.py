@@ -57,7 +57,7 @@ def writeRec7():
     RYMIN=lats[iLatMinGRIB]
     RYMAX=lats[iLatMaxGRIB]
     fout.write(('{:4d}'*6+'{:10.4f}'*2+'{:9.4f}'*2+'\n').format(NX1,NY1,NX2,NY2,NZ1,NZ2,RXMIN,RXMAX,RYMIN,RYMAX))
-    SIGMA=np.flipud(levsIncl)/1013.25
+    SIGMA=np.array(levsIncl)/1013.25
     for s in SIGMA:
         fout.write('{:6.3f}\n'.format(s))
 
@@ -92,17 +92,13 @@ def writeRec9():
         f=open(filePaths[t],'r')
         gribapi.grib_multi_support_on()
         mcount = gribapi.grib_count_in_file(f) #number of messages in file
-        gids = [gribapi.grib_new_from_file(f) for i in range(mcount)]
+        [gribapi.grib_new_from_file(f) for i in range(mcount)]
         f.close()
         #
-        varNames=[]
-        levels=[]
-        for i in range(mcount):
-            gid = gids[i]
-            varNames.append(gribapi.grib_get(gid,'shortName'))
-            levels.append(gribapi.grib_get(gid,'level'))
-        #
-        gidHGT=np.flipud([i+1 for i in range(len(varNames)) if (varNames[i] == 'gh' and levels[i] in levsIncl)])
+        HGTgrd=np.zeros(shape=(Nj,Ni,NZ))
+        for k in range(NZ):
+            HGTvals=gribapi.grib_get_values(gidHGT[k])
+            HGTgrd[:,:,k]=np.reshape(HGTvals,(Nj,Ni),'C')
         #####
         for j in range(NY):
             JX=j+1 #J-index of grid cell
@@ -110,11 +106,8 @@ def writeRec9():
                 IX=i+1 #i-index of grid cell
                 fout.write(('{:4d}'+'{:02d}'*3+'{:3d}'*2+'{:7.1f}{:5.2f}{:2d}'+'{:8.1f}'*2+'\n').format(MYR,MMO,MDAY,MHR,IX,JX,PRES,RAIN,SC,RADSW,RADLW))
                 for k in range(NZ):
-                    HGTvals=gribapi.grib_get_values(gidHGT[k])
-                    HGTgrd=np.reshape(HGTvals,(Nj,Ni),'C')
-                    #
-                    PRES2=np.flipud(levsIncl)[k] #Pressure (mb)
-                    Z=int(HGTgrd[iLatMinGRIB+j,iLonMinGRIB+i]) #Elevation (m above sea level)
+                    PRES2=levsIncl[k] #Pressure (mb)
+                    Z=int(HGTgrd[iLatMinGRIB+j,iLonMinGRIB+i,k]) #Elevation (m above sea level)
                     fout.write(('{:4d}{:6d}\n').format(PRES2,Z))
         #
         for i in range(mcount):
@@ -139,7 +132,7 @@ lonMinCP=273.2 #Min lon of CALPUFF grid
 lonMaxCP=274.1 #Max lon of CALPUFF grid
 inDir=os.getenv("HOME")+'/UNRESP_ndrive/Data/NAM_20180306'
 outFile=os.getenv("HOME")+'/Data/UNRESP/3D.DAT'
-levsIncl=[2,5,7,10,20,30,50,75,100,150,200,250,300,400,500,600,700,800,850,900,925,950,1000]
+levsIncl=[1000,950,925,900,850,800,700,600,500,400,300,250,200,150,100,75,50,30,20,10,7,5,2]
 #####
 
 #####SET FILENAMES
@@ -171,7 +164,7 @@ for i in range(mcount):
 
 #####GET REQUIRED GIDS
 gidPRMSL=varNames.index("prmsl")+1
-gidHGT=[i+1 for i in range(len(varNames)) if (varNames[i] == 'gh' and levels[i] in levsIncl)]
+gidHGT=np.flipud([i+1 for i in range(len(varNames)) if (varNames[i] == 'gh' and levels[i] in levsIncl)])
 #gidU10=varNames.index("10u")+1
 #gidV10=varNames.index("10v")+1
 gidU=[i+1 for i in range(len(varNames)) if (varNames[i] == 'u' and levels[i] in levsIncl)]
