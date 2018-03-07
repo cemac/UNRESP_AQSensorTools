@@ -96,11 +96,24 @@ def writeRec9():
         f.close()
         HGTgrd=np.zeros(shape=(Nj,Ni,NZ))
         TMPgrd=np.zeros(shape=(Nj,Ni,NZ))
+        Ugrd=np.zeros(shape=(Nj,Ni,NZ))
+        Vgrd=np.zeros(shape=(Nj,Ni,NZ))
         for k in range(NZ):
             HGTvals=gribapi.grib_get_values(gidHGT[k])
             HGTgrd[:,:,k]=np.reshape(HGTvals,(Nj,Ni),'C')
             TMPvals=gribapi.grib_get_values(gidTMP[k])
             TMPgrd[:,:,k]=np.reshape(TMPvals,(Nj,Ni),'C')
+            Uvals=gribapi.grib_get_values(gidU[k])
+            Ugrd[:,:,k]=np.reshape(Uvals,(Nj,Ni),'C')
+            Vvals=gribapi.grib_get_values(gidV[k])
+            Vgrd[:,:,k]=np.reshape(Vvals,(Nj,Ni),'C')
+        WSgrd=np.sqrt(Ugrd**2+Vgrd**2)
+        WDgrd=np.arctan2(Vgrd,Ugrd) #radians, between [-pi,pi], positive anticlockwise from positive x-axis
+        WDgrd*=180/np.pi #degrees, between [-180,180], positive anticlockwise from positive x-axis
+        WDgrd+=180 #degrees, between [0,360], positive anticlockwise from negative x-axis (Since we specify the direction the wind is blowing FROM, not TO)
+        WDgrd=-WDgrd #degrees, between [-360,0], positive clockwise from negative x-axis (Since wind direction is positive clockwise)
+        WDgrd+=90 #degrees, between [-270,90], positive clockwise from positive y-axis (Since wind direction is from North)
+        WDgrd=np.mod(WDgrd,360) #degrees, between [0,360], positive clockwise from positive y-axis (DONE!)
         #####
         for j in range(NY):
             JX=j+1 #J-index of grid cell
@@ -110,8 +123,10 @@ def writeRec9():
                 for k in range(NZ):
                     PRES2=levsIncl[k] #Pressure (mb)
                     Z=int(HGTgrd[iLatMinGRIB+j,iLonMinGRIB+i,k]) #Elevation (m above sea level)
-                    TEMPK=int(TMPgrd[iLatMinGRIB+j,iLonMinGRIB+i,k]) #Temperature (Kelvin)
-                    fout.write(('{:4d}{:6d}{:6.1f}\n').format(PRES2,Z,TEMPK))
+                    TEMPK=TMPgrd[iLatMinGRIB+j,iLonMinGRIB+i,k] #Temperature (Kelvin)
+                    WD=int(WDgrd[iLatMinGRIB+j,iLonMinGRIB+i,k]) #Wind direction (degrees)
+                    WS=WSgrd[iLatMinGRIB+j,iLonMinGRIB+i,k] #Wind speed (m/s)
+                    fout.write(('{:4d}{:6d}{:6.1f}{:4d}{:5.1f}\n').format(PRES2,Z,TEMPK,WD,WS))
         #
         for i in range(mcount):
             gribapi.grib_release(i+1)
@@ -169,10 +184,8 @@ for i in range(mcount):
 gidPRMSL=varNames.index("prmsl")+1
 gidHGT=np.flipud([i+1 for i in range(len(varNames)) if (varNames[i] == 'gh' and levels[i] in levsIncl)])
 gidTMP=np.flipud([i+1 for i in range(len(varNames)) if (varNames[i] == 't' and levels[i] in levsIncl)])
-#gidU10=varNames.index("10u")+1
-#gidV10=varNames.index("10v")+1
-#gidU=[i+1 for i in range(len(varNames)) if (varNames[i] == 'u' and levels[i] in levsIncl)]
-#gidV=[i+1 for i in range(len(varNames)) if varNames[i] == 'u']
+gidU=np.flipud([i+1 for i in range(len(varNames)) if (varNames[i] == 'u' and levels[i] in levsIncl)])
+gidV=np.flipud([i+1 for i in range(len(varNames)) if (varNames[i] == 'v' and levels[i] in levsIncl)])
 #####
 
 #####GET LATS, LONS, ETC
@@ -207,7 +220,6 @@ NY=iLatMaxGRIB-iLatMinGRIB+1 #NY, i.e. number of latitudes in GRIB subset grid
 NZ=len(levsIncl) #NZ, i.e. number of levels to be extracted from GRIB subset grid
 #####
 
-
 ###PLOT A MESSAGE
 #gidPlot=gidHGT[-2]
 #Ni=gribapi.grib_get(gidPlot,'Ni')
@@ -223,6 +235,7 @@ NZ=len(levsIncl) #NZ, i.e. number of levels to be extracted from GRIB subset gri
 #cs=map.contourf(xx,yy,msgmasked)
 #map.colorbar(cs)
 #plt.show()
+#####
 
 #####RELEASE ALL MESSAGES
 for i in range(mcount):
