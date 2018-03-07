@@ -94,11 +94,13 @@ def writeRec9():
         mcount = gribapi.grib_count_in_file(f) #number of messages in file
         [gribapi.grib_new_from_file(f) for i in range(mcount)]
         f.close()
-        #
         HGTgrd=np.zeros(shape=(Nj,Ni,NZ))
+        TMPgrd=np.zeros(shape=(Nj,Ni,NZ))
         for k in range(NZ):
             HGTvals=gribapi.grib_get_values(gidHGT[k])
             HGTgrd[:,:,k]=np.reshape(HGTvals,(Nj,Ni),'C')
+            TMPvals=gribapi.grib_get_values(gidTMP[k])
+            TMPgrd[:,:,k]=np.reshape(TMPvals,(Nj,Ni),'C')
         #####
         for j in range(NY):
             JX=j+1 #J-index of grid cell
@@ -108,7 +110,8 @@ def writeRec9():
                 for k in range(NZ):
                     PRES2=levsIncl[k] #Pressure (mb)
                     Z=int(HGTgrd[iLatMinGRIB+j,iLonMinGRIB+i,k]) #Elevation (m above sea level)
-                    fout.write(('{:4d}{:6d}\n').format(PRES2,Z))
+                    TEMPK=int(TMPgrd[iLatMinGRIB+j,iLonMinGRIB+i,k]) #Temperature (Kelvin)
+                    fout.write(('{:4d}{:6d}{:6.1f}\n').format(PRES2,Z,TEMPK))
         #
         for i in range(mcount):
             gribapi.grib_release(i+1)
@@ -165,9 +168,10 @@ for i in range(mcount):
 #####GET REQUIRED GIDS
 gidPRMSL=varNames.index("prmsl")+1
 gidHGT=np.flipud([i+1 for i in range(len(varNames)) if (varNames[i] == 'gh' and levels[i] in levsIncl)])
+gidTMP=np.flipud([i+1 for i in range(len(varNames)) if (varNames[i] == 't' and levels[i] in levsIncl)])
 #gidU10=varNames.index("10u")+1
 #gidV10=varNames.index("10v")+1
-gidU=[i+1 for i in range(len(varNames)) if (varNames[i] == 'u' and levels[i] in levsIncl)]
+#gidU=[i+1 for i in range(len(varNames)) if (varNames[i] == 'u' and levels[i] in levsIncl)]
 #gidV=[i+1 for i in range(len(varNames)) if varNames[i] == 'u']
 #####
 
