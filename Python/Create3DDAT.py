@@ -1,31 +1,47 @@
 def writeRec1():
-    fout.write('{:16}{:16}{}\n'.format('3D.DAT','2.1','Created using Create3DDAT.py'))
+    DATASET='3D.DAT' #Dataset name
+    DATAVER='2.1' #Dataset version
+    DATAMOD='Created using Create3DDAT.py' #Dataset message field
+    fout.write('{:16}{:16}{}\n'.format(DATASET,DATAVER,DATAMOD))
 
 def writeRec2():
-    fout.write('1\n')
-    fout.write("Currently set up to process GRIB data file from NAM's Central American/Caribbean domain\n")
+    NCOMM=1 #Number of comment records to follow
+    fout.write('{:1d}\n'.format(NCOMM))
+    COMMENT="Currently set up to process GRIB data file from NAM's Central American/Caribbean domain" #Comments
+    fout.write('{}\n'.format(COMMENT))
 
 def writeRec3():
-    #Flags for: vertical velocity, RH, cloud/rain MR, ice/snow MR, graupel MR, surface 2D files created
-    fout.write(('{:3d}'*6+'\n').format(1,1,0,0,0,0))
+    IOUTW=1 #Vertical velocity flag
+    IOUTQ=1 #Relative humidity flag
+    IOUTC=0 #cloud/rain mixing ration flag
+    IOUTI=0 #ice/snow MR flag
+    IOUTG=0 #graupel MP flag
+    IOSRF=0 #create surface 2D files flag
+    fout.write(('{:3d}'*6+'\n').format(IOUTW,IOUTQ,IOUTC,IOUTI,IOUTG,IOSRF))
 
 def writeRec4():
-    cenLat=(lats[iLatMinGRIB]+lats[iLatMaxGRIB])/2. #centre latitude of GRIB subset grid
-    cenLon=(lons[iLonMinGRIB]+lons[iLonMaxGRIB])/2. #centre longitude of GRIB subset grid
-    firstTrueLat=lats[iLatMinGRIB] #First latitude in GRIB subset grid
-    secondTrueLat=lats[iLatMinGRIB+1] #Second latitude in GRIB subset grid
-    SWdotX=0.0 #Not used so set to zero
-    SWdotY=0.0 #Not used so set to zero
+    MAPTXT='LLC' #Map projection (LLC=lat/lon)
+    RLATC=(lats[iLatMinGRIB]+lats[iLatMaxGRIB])/2. #centre latitude of GRIB subset grid
+    RLONC=(lons[iLonMinGRIB]+lons[iLonMaxGRIB])/2. #centre longitude of GRIB subset grid
+    TRUELAT1=lats[iLatMinGRIB] #First latitude in GRIB subset grid
+    TRUELAT2=lats[iLatMinGRIB+1] #Second latitude in GRIB subset grid
+    X1DMN=0.0 #Not used so set to zero
+    Y1DMN=0.0 #Not used so set to zero
     DXY=0.0 #Not used so set to zero
-    fout.write(('{:4}{:9.4f}{:10.4f}{:7.2f}{:7.2f}{:10.3f}{:10.3f}{:8.3f}{:4d}{:4d}{:3d}\n').
-               format('LLC',cenLat,cenLon,firstTrueLat,secondTrueLat,SWdotX,SWdotY,DXY,NX,NY,NZ))
+    fout.write(('{:4}{:9.4f}{:10.4f}'+'{:7.2f}'*2+'{:10.3f}'*2+'{:8.3f}'+'{:4d}'*2+'{:3d}\n').
+               format(MAPTXT,RLATC,RLONC,TRUELAT1,TRUELAT2,X1DMN,Y1DMN,DXY,NX,NY,NZ))
 
 def writeRec5():
     #Flags that aren't used unless using MM5 model
     fout.write(('{:3d}'*23+'\n').format(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0))
 
 def writeRec6():
-    fout.write('{:10}{:5d}{:4d}{:4d}{:4d}\n'.format(startDate+'00',16,NX,NY,NZ))
+    IBYRM=int(startDate[0:4])
+    IBMOM=int(startDate[4:6])
+    IBDYM=int(startDate[6:8])
+    IBHRM=0
+    NHRSMM5=16
+    fout.write(('{:4d}'+'{:02d}'*3+'{:5d}'+'{:4d}'*3+'\n').format(IBYRM,IBMOM,IBDYM,IBHRM,NHRSMM5,NX,NY,NZ))
     
 def writeRec7():
     NX1=1
