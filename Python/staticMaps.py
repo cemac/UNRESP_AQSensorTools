@@ -16,6 +16,7 @@ Output: static_concrec010**.png - A series of static image files of the SO2 plum
 import numpy as np
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 import matplotlib as mpl
 import os
 import utm
@@ -120,6 +121,20 @@ norm = mpl.colors.BoundaryNorm(boundaries=binLims,ncolors=5)
 #####
 
 #####PLOT
+plt.ioff() #turn off interactive plotting
+#Download ESRI image only once:
+bmap = Basemap(llcrnrlon=lonMin,llcrnrlat=latMin,urcrnrlon=lonMax,urcrnrlat=latMax)
+esri_url = \
+"http://server.arcgisonline.com/ArcGIS/rest/services/ESRI_Imagery_World_2D/MapServer/export?\
+bbox=%s,%s,%s,%s&\
+bboxSR=%s&\
+imageSR=%s&\
+size=%s,%s&\
+dpi=%s&\
+format=png32&\
+f=image" %\
+(bmap.llcrnrlon,bmap.llcrnrlat,bmap.urcrnrlon,bmap.urcrnrlat,bmap.epsg,bmap.epsg,xpixels,bmap.aspect*xpixels,96)
+ESRIimg = mpimg.imread(esri_url)
 for j,file in enumerate(filePaths):
     #Read in concentration data:
     f = open(file,'r')
@@ -130,28 +145,29 @@ for j,file in enumerate(filePaths):
     concAry=np.reshape(conc,(ny,nx)) #Reshape data onto latlon grid
     concMask = np.ma.masked_array(concAry, concAry<binLims[0]) #apply mask to all concs below lower limit
     #Plot on basemap:
-    fig = plt.figure(figsize=(10,7))
-    map = Basemap(llcrnrlon=lonMin,llcrnrlat=latMin,urcrnrlon=lonMax,urcrnrlat=latMax)
-    map.arcgisimage(service='ESRI_Imagery_World_2D', xpixels=xpixels,verbose=True)
-    map.pcolormesh(glon,glat,concMask,norm=norm,cmap=cmap,alpha=0.5)
-    cbar=map.colorbar(location='bottom',pad='20%',cmap=cmap,norm=norm,boundaries=[0.] + binLims + [100000.],
+    plt.figure(figsize=(12,9))
+    bmap = Basemap(llcrnrlon=lonMin,llcrnrlat=latMin,urcrnrlon=lonMax,urcrnrlat=latMax)
+    bmap.imshow(ESRIimg,origin='upper')
+    bmap.pcolormesh(glon,glat,concMask,norm=norm,cmap=cmap,alpha=0.5)
+    cbar=bmap.colorbar(location='bottom',pad='20%',cmap=cmap,norm=norm,boundaries=[0.] + binLims + [100000.],
                  extend='both',extendfrac='auto',ticks=binLims,spacing='uniform',label='SO2 concentration (ug/m3)')
     cbar.solids.set(alpha=1)
     latTicks=np.arange(round(latMin,1),round(latMax,1)+0.1,0.1)
     lonTicks=np.arange(round(lonMin,1),round(lonMax,1)+0.1,0.2)
-    map.drawparallels(latTicks,labels=[1,0,0,0],linewidth=0.0)#labels=[left,right,top,bottom]
-    map.drawmeridians(lonTicks,labels=[0,0,0,1],linewidth=0.0)
+    bmap.drawparallels(latTicks,labels=[1,0,0,0],linewidth=0.0)#labels=[left,right,top,bottom]
+    bmap.drawmeridians(lonTicks,labels=[0,0,0,1],linewidth=0.0)
     for i,town in enumerate(towns):
         plt.plot(townCoords[i][0],townCoords[i][1],'ok',markersize=3)
-        plt.text(townCoords[i][0],townCoords[i][1],town,fontsize=9)
+        plt.text(townCoords[i][0],townCoords[i][1],town,fontsize=8)
     for i,city in enumerate(cities):
         plt.plot(cityCoords[i][0],cityCoords[i][1],'sk',markersize=4)
         plt.text(cityCoords[i][0],cityCoords[i][1],city,fontsize=11)
     plt.plot(volcCoords[0],volcCoords[1],'^r',markersize=5)
     plt.suptitle(so2title)
-    plt.title(dates[j].strftime('%c'))
-    #plt.show()
+    plt.title(dates[j].strftime('%c'),fontsize=24)
     PNGfile = 'static_'+ file[-17:-4] +'.png'
     PNGpath=os.path.join(outDir,PNGfile)
     plt.savefig(PNGpath)
+    plt.close()
+plt.ion() #turn on interactive ploting
 #####    
