@@ -19,6 +19,9 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 import os
 import utm
+import datetime as dt
+import pytz
+from dateutil.parser import parse
 import argparse
 
 def Read_Two_Column_File(file_name):
@@ -38,16 +41,22 @@ def Read_Two_Column_File(file_name):
 #parser.add_argument("concDir", help="absolute/relative path to directory containing CALPUFF SO2 output files, \
 #           with expected naming convention 'concrec010**.dat', where '**' goes from '01' through to '48'",type=str)
 #parser.add_argument("xyFile", help="absolute/relative path to data file containing the x,y coordinates of each output point",type=str)
+#parser.add_argument("date", help="date of forecast in format YYYYMMDD",type=str)
+#parser.add_argument("outDir", help="absolute/relative path to output directory for the generated png files",type=str)
 #args = parser.parse_args()
 #concDir=args.concDir
 #xyFile=args.xyFile
+#date=args.date
+#outDir=args.outDir
 #
 concDir=os.getenv('HOME')+'/Data/UNRESP/180122'
 xyFile=os.getenv('HOME')+'/gitRepos/UNRESP/Data/xy_masaya.dat'
+date='20180122'
+outDir=os.getenv('HOME')+'/Data/UNRESP/180122_out'
 #####
 
 ####PARAMETERS
-nConcFiles=1 #Number of conc files to process (48 = full 2 days)
+nConcFiles=48 #Number of conc files to process (48 = full 2 days)
 binLims=[10,350,600,2600,9000,14000] #SO2 bin limits
 colsHex=['#FFFFFF','#008000','#FFFF00','#FF6600','#FF0000','#800080','#8F246B'] #Hex codes for SO2 colour bins
 xpixels=1500 #Zoom lvel for satellite basemap (higher=bigger file sizes)
@@ -60,10 +69,13 @@ townCoords=((-86.2058,11.972),(-86.2021,11.9617),(-86.3013,11.9553),
 cities=(' MANAGUA',)
 cityCoords=((-86.29,12.12),)
 volcCoords=(-86.1608, 11.9854)
+so2title='Atmospheric SO2 concentrations at ground level (hourly means). GCRF UNRESP'
 #####
 
 #####CHECK PATHS/FILES EXIST
 assert os.path.exists(concDir), "concDir directory does not exist. Check path."
+assert os.path.exists(xyFile), "xyFile data file does not exist. Check path."
+assert os.path.exists(outDir), "outDir directory does not exist. Check path."
 filenames=[]
 filePaths=[]
 for i in range(nConcFiles):
@@ -73,7 +85,14 @@ for i in range(nConcFiles):
     filePath=os.path.join(concDir,fileName)
     filePaths.append(filePath)
     assert os.path.exists(filePath), "File "+filePath+" not found. Check path."
-assert os.path.exists(xyFile), "xyFile data file does not exist. Check path."
+#####
+
+####GET DATES/TIMES
+startDate=pytz.utc.localize(parse(date))
+dates=[]
+for i in range(nConcFiles):
+    iDate=startDate+dt.timedelta(hours=i+1)
+    dates.append(iDate)
 #####
 
 #####READ IN X,Y DATA AND CONVERT TO LAT,LON
@@ -101,7 +120,7 @@ norm = mpl.colors.BoundaryNorm(boundaries=binLims,ncolors=5)
 #####
 
 #####PLOT
-for file in filePaths:
+for j,file in enumerate(filePaths):
     #Read in concentration data:
     f = open(file,'r')
     lines = f.read().splitlines()
@@ -111,6 +130,7 @@ for file in filePaths:
     concAry=np.reshape(conc,(ny,nx)) #Reshape data onto latlon grid
     concMask = np.ma.masked_array(concAry, concAry<binLims[0]) #apply mask to all concs below lower limit
     #Plot on basemap:
+    fig = plt.figure(figsize=(10,7))
     map = Basemap(llcrnrlon=lonMin,llcrnrlat=latMin,urcrnrlon=lonMax,urcrnrlat=latMax)
     map.arcgisimage(service='ESRI_Imagery_World_2D', xpixels=xpixels,verbose=True)
     map.pcolormesh(glon,glat,concMask,norm=norm,cmap=cmap,alpha=0.5)
@@ -125,11 +145,13 @@ for file in filePaths:
         plt.plot(townCoords[i][0],townCoords[i][1],'ok',markersize=3)
         plt.text(townCoords[i][0],townCoords[i][1],town,fontsize=9)
     for i,city in enumerate(cities):
-        print(i,city)
         plt.plot(cityCoords[i][0],cityCoords[i][1],'sk',markersize=4)
         plt.text(cityCoords[i][0],cityCoords[i][1],city,fontsize=11)
     plt.plot(volcCoords[0],volcCoords[1],'^r',markersize=5)
-    plt.show()
-#    PNGfile = 'map_'+ file[-17:-4] +'.png'
-#    plt.savefig(PNGfile)
+    plt.suptitle(so2title)
+    plt.title(dates[j].strftime('%c'))
+    #plt.show()
+    PNGfile = 'static_'+ file[-17:-4] +'.png'
+    PNGpath=os.path.join(outDir,PNGfile)
+    plt.savefig(PNGpath)
 #####    
