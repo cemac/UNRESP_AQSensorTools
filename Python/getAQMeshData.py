@@ -10,7 +10,7 @@ Usage: ./getAQMeshData.py <startDate> <endDate> <variables> <outFreq>
         <endDate> - End date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS. Or type 'end' to get data from the latest possible time.
         <variables> - List of variables to download, in single quotes separated by spaces, e.g. 'NO PM10 SO2'. Or specify 'ALL' to download all variables
         <outFreq> - "Frequency of output files. Type 'all' for all data in one file, 'daily' for one calendar day per file, or 'monthly' for one calendar month per file
-Output: One or multiple csv data files (depending on chosen output frequency) with naming convention: AQMeshData_[dateRange]_[variables].csv
+Output: One or multiple csv data files (depending on chosen output frequency) with naming convention: AQMeshData_[stationID]_[dateRange]_[variables].csv
 """
 import pandas as pd
 from pandas.io.json import json_normalize
@@ -138,18 +138,18 @@ for i in range(len(startDays)):
     procDF=procDF[colOrder] #Reorder columns
     procDF=procDF.reindex(index=procDF.index[::-1]) #flip row so oldest date first
     if outFreq=='daily':
-        fname='AQMeshData_'+startDays[i].strftime('%Y-%m-%d')+'_'+varStr+'.csv'
+        fname='AQMeshData_'+stationID+'_'+startDays[i].strftime('%Y-%m-%d')+'_'+varStr+'.csv'
         print('Writing data to file '+fname)
         procDF.to_csv(os.path.join(pyDir,fname),index=False)
     else:
         allData=allData.append(procDF)
     if outFreq=='monthly' and (startDays[i].month != (startDays[i]+dt.timedelta(days=1)).month or i==len(startDays)-1):
-        fname='AQMeshData_'+startDays[i].strftime('%Y-%m')+'_'+varStr+'.csv'
+        fname='AQMeshData_'+stationID+'_'+startDays[i].strftime('%Y-%m')+'_'+varStr+'.csv'
         print('Writing data to file '+fname)
         allData.to_csv(os.path.join(pyDir,fname),index=False)
         allData=pd.DataFrame(columns=colOrder)
 if outFreq=='all':
-    fname='AQMeshData_'+start.strftime('%Y-%m-%dT%H-%M-%S')+'_to_'+end.strftime('%Y-%m-%dT%H-%M-%S')+'_'+varStr+'.csv'
+    fname='AQMeshData_'+stationID+'_'+start.strftime('%Y-%m-%dT%H-%M-%S')+'_to_'+end.strftime('%Y-%m-%dT%H-%M-%S')+'_'+varStr+'.csv'
     print('Writing data to file '+fname)
     allData.to_csv(os.path.join(pyDir,fname),index=False)
 #####
