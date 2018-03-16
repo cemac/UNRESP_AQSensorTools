@@ -125,31 +125,41 @@ endDaysStr=[t.strftime('%Y-%m-%dT%H:%M:%S') for t in endDays]
 #####LOAD IN DATA AND WRITE TO CSV
 allData=pd.DataFrame(columns=colOrder)
 for i in range(len(startDays)):
-    print('Downloading data from '+startDays[i].strftime('%Y-%m-%d'))
+    foundData=False
+    print('Attempting to download data from '+startDays[i].strftime('%Y-%m-%d'))
     url = "https://api.airmonitors.net/3.5/GET/"+accountID+"/"+licenceKey+"/stationdata/"+startDaysStr[i]+"/"+endDaysStr[i]+"/"+stationID
     if variables != 'ALL':
         url=url+"/"+varStr
     rawText = requests.get(url=url)
-    if rawText.text=='NO DATA WAS FOUND FOR YOUR GIVEN PARAMETERS':
-        continue
-    rawJson = json.loads(rawText.text)
-    rawDF = json_normalize(rawJson,record_path=['Channels'],meta=['TBTimestamp', 'TETimestamp'])
-    procDF=rawDF.drop(['Channel'], axis=1) #Drop channel column
-    procDF=procDF[colOrder] #Reorder columns
-    procDF=procDF.reindex(index=procDF.index[::-1]) #flip row so oldest date first
+    if not rawText.text=='NO DATA WAS FOUND FOR YOUR GIVEN PARAMETERS':
+        foundData=True
+        rawJson = json.loads(rawText.text)
+        rawDF = json_normalize(rawJson,record_path=['Channels'],meta=['TBTimestamp', 'TETimestamp'])
+        procDF=rawDF.drop(['Channel'], axis=1) #Drop channel column
+        procDF=procDF[colOrder] #Reorder columns
+        procDF=procDF.reindex(index=procDF.index[::-1]) #flip row so oldest date first
     if outFreq=='daily':
-        fname='AQMeshData_'+stationID+'_'+startDays[i].strftime('%Y-%m-%d')+'_'+varStr+'.csv'
-        print('Writing data to file '+fname)
-        procDF.to_csv(os.path.join(pyDir,fname),index=False)
-    else:
+        if foundData:
+            fname='AQMeshData_'+stationID+'_'+startDays[i].strftime('%Y-%m-%d')+'_'+varStr+'.csv'
+            print('Writing data to file '+fname)
+            procDF.to_csv(os.path.join(pyDir,fname),index=False)
+        else:
+            print('No data found for this day')
+    elif foundData:
         allData=allData.append(procDF)
     if outFreq=='monthly' and (startDays[i].month != (startDays[i]+dt.timedelta(days=1)).month or i==len(startDays)-1):
-        fname='AQMeshData_'+stationID+'_'+startDays[i].strftime('%Y-%m')+'_'+varStr+'.csv'
+        if allData.shape[0]==0:
+             print('No data found for this month')
+        else:
+            fname='AQMeshData_'+stationID+'_'+startDays[i].strftime('%Y-%m')+'_'+varStr+'.csv'
+            print('Writing data to file '+fname)
+            allData.to_csv(os.path.join(pyDir,fname),index=False)
+            allData=pd.DataFrame(columns=colOrder)
+if outFreq=='all':
+    if allData.shape[0]==0:
+        print('No data found in entire specified period')
+    else:
+        fname='AQMeshData_'+stationID+'_'+start.strftime('%Y-%m-%dT%H-%M-%S')+'_to_'+end.strftime('%Y-%m-%dT%H-%M-%S')+'_'+varStr+'.csv'
         print('Writing data to file '+fname)
         allData.to_csv(os.path.join(pyDir,fname),index=False)
-        allData=pd.DataFrame(columns=colOrder)
-if outFreq=='all':
-    fname='AQMeshData_'+stationID+'_'+start.strftime('%Y-%m-%dT%H-%M-%S')+'_to_'+end.strftime('%Y-%m-%dT%H-%M-%S')+'_'+varStr+'.csv'
-    print('Writing data to file '+fname)
-    allData.to_csv(os.path.join(pyDir,fname),index=False)
 #####
