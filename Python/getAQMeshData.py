@@ -4,7 +4,7 @@ Script name: getAQMeshData.py
 Author: JO'N
 Date: March 2018
 Purpose: Download data from an AQMesh pod using the API tool
-Usage: ./getAQMeshData.py <startDate> <endDate> <variables> <outFreq>
+Usage: ./getAQMeshData.py <stationID> <startDate> <endDate> <variables> <outFreq>
         <stationID> - Unique ID of the AQMesh station from which you want to download data
         <startDate> - Start date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS. Or type 'start' to get data from the earliest possible time.
         <endDate> - End date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS. Or type 'end' to get data from the latest possible time.
