@@ -162,14 +162,6 @@ if __name__ == '__main__':
     parser.add_argument("outFreq",help="Frequency of output files. Type 'all' to generate one output file containing all data,\
      'daily' to generate one output file per calendar day, or 'monthly' to generate one output file per calendar month",type=str)
     args = parser.parse_args()
-    #Set local variables:
-    stationID=args.stationID
-    startDate=args.startDate
-    endDate=args.endDate
-    variables=args.variables
-    outFreq=args.outFreq
-    #####
-    
     #####CALL MAIN ROUTINE
-    main(stationID,startDate,endDate,variables,outFreq)
+    main(args.stationID,args.startDate,args.endDate,args.variables,args.outFreq)
     ####
