@@ -105,12 +105,14 @@ def main(stationID,startDate,endDate,variables,outFreq):
             endDays[d]-=dt.timedelta(seconds=1)
     startDaysStr=[t.strftime('%Y-%m-%dT%H:%M:%S') for t in startDays]
     endDaysStr=[t.strftime('%Y-%m-%dT%H:%M:%S') for t in endDays]
-    
+    #####
+
     #####LOAD IN DATA AND WRITE TO CSV
     allData=pd.DataFrame(columns=colOrder)
     for i in range(len(startDays)):
         foundData=False
-        print('Attempting to download data from '+startDays[i].strftime('%Y-%m-%d'))
+        with open(os.path.join(pyDir,'getAQMeshData.log'),'a') as logfile:
+            logfile.write('Attempting to download data from '+startDays[i].strftime('%Y-%m-%d')+'\n')
         url = "https://api.airmonitors.net/3.5/GET/"+accountID+"/"+licenceKey+"/stationdata/"+startDaysStr[i]+"/"+endDaysStr[i]+"/"+stationID
         if variables != 'ALL':
             url=url+"/"+varStr
@@ -125,26 +127,32 @@ def main(stationID,startDate,endDate,variables,outFreq):
         if outFreq=='daily':
             if foundData:
                 fname='AQMeshData_'+stationID+'_'+startDays[i].strftime('%Y-%m-%d')+'_'+varStr+'.csv'
-                print('Writing data to file '+fname)
+                with open(os.path.join(pyDir,'getAQMeshData.log'),'a') as logfile:
+                    logfile.write('Writing data to file '+fname+'\n')
                 procDF.to_csv(os.path.join(pyDir,fname),index=False)
             else:
-                print('No data found for this day')
+                with open(os.path.join(pyDir,'getAQMeshData.log'),'a') as logfile:
+                    logfile.write('No data found for this day\n')
         elif foundData:
             allData=allData.append(procDF)
         if outFreq=='monthly' and (startDays[i].month != (startDays[i]+dt.timedelta(days=1)).month or i==len(startDays)-1):
             if allData.shape[0]==0:
-                 print('No data found for this month')
+                with open(os.path.join(pyDir,'getAQMeshData.log'),'a') as logfile:
+                    logfile.write('No data found for this month\n')
             else:
                 fname='AQMeshData_'+stationID+'_'+startDays[i].strftime('%Y-%m')+'_'+varStr+'.csv'
-                print('Writing data to file '+fname)
+                with open(os.path.join(pyDir,'getAQMeshData.log'),'a') as logfile:
+                    logfile.write('Writing data to file '+fname+'\n')
                 allData.to_csv(os.path.join(pyDir,fname),index=False)
                 allData=pd.DataFrame(columns=colOrder)
     if outFreq=='all':
         if allData.shape[0]==0:
-            print('No data found in entire specified period')
+            with open(os.path.join(pyDir,'getAQMeshData.log'),'a') as logfile:
+                logfile.write('No data found in entire specified period\n')
         else:
             fname='AQMeshData_'+stationID+'_'+start.strftime('%Y-%m-%dT%H-%M-%S')+'_to_'+end.strftime('%Y-%m-%dT%H-%M-%S')+'_'+varStr+'.csv'
-            print('Writing data to file '+fname)
+            with open(os.path.join(pyDir,'getAQMeshData.log'),'a') as logfile:
+                logfile.write('Writing data to file '+fname+'\n')
             allData.to_csv(os.path.join(pyDir,fname),index=False)
 
 
