@@ -100,7 +100,7 @@ The python script works as follows:
 \item The `stride' parameter is hard-coded to 100 but can be reduced to increase the resolution of the plot (takes longer to execute).
 \end{itemize}
 
-\section{CALPUFF: Installation guide}
+\section{CALPUFF: Installation guide} \label{Installation}
 
 \subsection{General compiler settings}
 ***The intel compilers are preferred***\\\\
@@ -486,5 +486,27 @@ To set up CALPUFF:
 To run CALMET, type:\\
 \tab \texttt{\$ ./calpuff\_<compiler>.exe}\\\\
 Modify calpuff.inp so the the restart flag (RESTARTB) is set to 0 and run again.
+
+\section{Forecasting System - Leeds}
+This section describes the processes and file/directory structure behind the automated forecasting system, as run at Leeds.\\\\
+The root directory is called `UNRESPForecastingSystem' and is under version control on GitHub (\url{https://github.com/cemac-tech/UNRESPForecastingSystem.git}). The file/directory structure below this is described below:
+\begin{itemize}
+\item Run.sh -- The main shell script that runs the entire forecasting system
+\item CALPUFF\_SRC/ -- Fortran source code for the various parts of the CALPUFF modelling system (as listed below). This source data corresponds to Version 7 of the CALPUFF system (downloadable from here: \url{http://www.src.com/calpuff/download/mod7_codes.htm}), with a few minimal code changes required to allow the model to be built on a Linux system with Intel compilers; these changes are described in section \ref{Installation}.
+\begin{itemize}
+\item /TERREL -- Combines and grids terrain data
+\item /CTGPROC -- Processes and grids land use data
+\item /MAKEGEO -- Merges land use and terrain data to produce the geophysical data file for CALMET
+\end{itemize}
+\item CALPUFF\_INP/ -- Control files for the various elements of the CALPUFF system. All parameters that have been modified from those in the original downloaded file are described in \ref{Installation}.
+\item CALPUFF\_EXE/ -- Executables for the various elements of the CALPUFF system.
+\item data/ -- Various input data files to the CALPUFF system, as described below:
+\begin{itemize}
+\item w100n40.dem -- The (renamed) DEM data file for Central America from the GTOPO30 dataset (downloaded via \url{http://www.src.com/calpuff/data/terrain.html}).
+\item nalulcl20.bil -- The `USGS Land Use/Land Cover' file for North America (downloaded via \url{http://www.src.com/calpuff/data/land_use.html}).
+\item TERREL and CTGPROC output (.dat) files as input to MAKEGEO (copied into directory during runtime)
+\end{itemize}
+\end{itemize}
+
 
 \end{document}
