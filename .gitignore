@@ -1,0 +1,20 @@
+#Ignore...
+
+#All files with these extensions:
+*.directory
+*.pyc
+*.log
+
+#All latex files other than the .tex files
+Docs/*.aux
+Docs/*.out
+Docs/*.gz
+Docs/*.toc
+Docs/*.pdf
+
+#All these specific directories:
+Python/1733150_ElPanama/
+
+#All these specific files:
+Python/AQMeshCodes.txt
+Python/*.html
