@@ -24,7 +24,7 @@ if (now-dt.timedelta(hours=1)).day != now.day:
     getAQMeshData.main('1733150',startOf2DaysAgoStr,startOfYdayStr,'ALL','daily')
     
 #If into 2nd day of new month, download full previous month:
-if (now-dt.timedelta(days=1,hours=1)).month != now.month:
+if ((now-dt.timedelta(days=1)).month == now.month) and ((now-dt.timedelta(days=1,hours=1)).month != now.month):
     startOfLastMonth=dt.datetime(startOf2DaysAgo.year,startOf2DaysAgo.month,1)
     startOfLastMonthStr=startOfLastMonth.strftime('%Y-%m-%dT%H:%M:%S')
     startOfThisMonth=dt.datetime(now.year,now.month,1)
