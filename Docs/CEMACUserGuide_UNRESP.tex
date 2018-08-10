@@ -5,6 +5,7 @@
 \usepackage{amssymb}
 \usepackage{hyperref}
 \usepackage{listings}
+\usepackage{setspace}
 \usepackage[T1]{fontenc}
 \renewcommand\labelitemii{$\circ$}
 \newcommand\tab[1][0.5cm]{\hspace*{#1}}
@@ -15,57 +16,6 @@
 \tableofcontents
 
 \section{Python scripts}
-
-\subsection{masaya\_conc.py}
-
-\subsubsection{Purpose}
-
-Used to generate an interactive Google map showing SO$_2$ concentrations around the Masaya volcano, for one output time, as predicted by the CALPUFF dispersion model.
-
-\subsubsection{Usage}
-The script should be run from a UNIX command line as follows:\\\\
-\tab \texttt{\$ python3 <py-path>/masaya\_conc.py <concFile>}\\\\
-where:
-\begin{itemize}
-\item \texttt{<py-path>} is the path (either relative to the current directory, or full) to the directory in which the python script is located (replace with “./” if it is in the current directory).
-\item \texttt{<concFile>} is the path (relative or full) to the CALPUFF output file, with naming convention 'concrec******.dat' (the asterisks are replaced by numbers). This should be a single-column ASCII file (no header) containing the SO$_2$ concentrations (ug/cm$^3$) at each grid point (with the same order as the coordinates in `xy\_masaya.dat', described further below) for a particular output time.
-\end{itemize}
-
-\subsubsection{Dependencies}
-The script assumes that the data file `xy\_masaya.dat' is in a sub-directory named 'Data' located directly above the directory containing the python script itself (in line with the directory structure of the git repository). This is an ASCII file with two space-separated columns of data (no header) containing the projected x and y coordinates (units: km; projection: UTM zone P16) of the computational grid used by CALPUFF.\\\\
-The script also requires a number of external python packages to be imported. CEMAC periodically asks faculty (FoE) IT suppurt at the University of Leeds to add any required packaes to the loadable python/python-libs modules. Any faculty member should therefore be able to access the required packages by typing the following into the UNIX command line:\\\\
-\tab \texttt{\$ module load python3}\\
-\tab \texttt{\$ module load python-libs}\\\\
-If the user still experiences any import errors when running the script, they should install the missing python packages themselves.
-
-\subsubsection{Output}
-Running the script successfully will generate (in the current directory):
-\begin{itemize}
-\item \texttt{`map\_concrec******.png'} -- A static image file of the SO$_2$ plume (with no basemap).
-\item \texttt{`map\_concrec******.html'} -- An interactive webpage of the SO$_2$ plume (with a Google basemap).
-\end{itemize}
-
-\subsubsection{Algorithm details}
-The python script works as follows:
-\begin{itemize}
-\item The spatial data file (xy\_masaya.dat) is read in, and converted to lat/lon using the utm package.
-\item The concentration data file is then read in and stored into an appropriately sized 2D array.
-\item Any concentrations under 20 ug/m$^3$ are `masked' so that they will appear transparent in the plots. The other concentrations are `binned' using the following limits:
-\begin{itemize}
-\item $C \leq 20$ (ug/m$^3$)
-\item $20 < C \leq 350$
-\item $350 < C \leq 600$
-\item $600 < C \leq 2600$
-\item $2600 < C \leq 9000$
-\item $9000 < C \leq 14000$
-\item $C > 14000$
-\end{itemize}
-Each bin is assigned a different colour from the discrete colour bar, which replicates the limits as shown on \url{http://homepages.see.leeds.ac.uk/~earunres/masayaSO2.html}.
-\item The matplotlib package is used to create the static png image.
-\item The gmplot package is used to create the interactive Google map plot. Each concentration data point is plotted as a cell-centred non-overlapping square using the appropriate lat/lon values and bin colour.
-\end{itemize}
-
-
 
 \subsection{3dNicaragua.py}
 
@@ -135,20 +85,23 @@ To build the original source code:
 \item To get the Intel compilers to work, make the following additional changes:
 \begin{itemize}
 \item In params.trl, comment out the `Lahey F95 Compiler' block and uncomment the `Compaq DF Compiler' block.
+\item In setsrtm() (terrel.for), remove `access=caccess' from the open statement (otherwise TERREL crashes when trying to read in the first line of an SRTM3 data file with a "sequential-access I/O to unit open for direct access" error)
 \end{itemize}
 \item Compile using preferred compiler, as described above.
 \end{itemize}
+
 \subsubsection{Setup}
 To set up TERREL:
 \begin{itemize}
 \item Make a subdirectory called `data' and put the following files inside it:
 \begin{itemize}
-\item w100n40.dem -- The DEM data file for Central America from the GTOPO30 dataset (downloaded via \url{http://www.src.com/calpuff/data/terrain.html}). Make sure to rename this file to the name given here if necessary.
+\item w100n40.dem -- (If using 1km resolution data) The DEM data file for Central America from the GTOPO30 dataset (downloaded via \url{http://www.src.com/calpuff/data/terrain.html}). Make sure to rename this file to the name given here if necessary.
+\item n11w086.bil, n12w086.bil, n11w087.bil, n12w087.bil -- (If using 90m resolution data)  The DEM data files the Masaya region from the SRTM 3-sec dataset (downloaded via \url{https://earthexplorer.usgs.gov/} -- choose `SRTM Void Filled' and 'BIL' format). Make sure to rename the files to the names given here if necessary.
 \item (optional) xy\_masaya.dat -- This is a 2-column text file containing the x and y coordinates (in km, in the same projection as used for the main grid) of receptor points at which the terrain height will be calculated in addition to the gridded points in the main output file (only output if LXY = T in the input file).
 \end{itemize}
 \item Open the input file (terrel.inp) and make the following changes:
 \begin{itemize}
-\item NTDF -- Change to `1' (as we only have one input DEM file).
+\item NTDF -- Change to `1' if using GTOPO30 data (as we only have one input DEM file) or `4' if using SRTM3 data
 \item OUTFIL -- Change to e.g. `masaya.dat'. This is main output file that will contain the gridded processed terrain data.
 \item LSTFIL -- Change to e.g. `masaya.lst'. This is essentially the log file.
 \item PLTFIL -- Change to e.g. `masaya.grd'. This is an output file that can be plotted with e.g. the Surfer software package.
@@ -157,7 +110,7 @@ To set up TERREL:
 \item XYINP -- (if LXY = T is set below) Change to `data/xy\_masaya.dat'. This is the path to the input receptor points file.
 \item XYOUT -- (if LXY = T is set below) Change to e.g. `xyoutput\_masaya.rec'. This is output (elevation heights) at the receptor points.
 \item LCFILES -- Set to T (true). This is a bit annoying, but all files have to have names in either full uppercase or lowercase, and I find lowercase nicer.
-\item Subgroup (0b) -- At the end of this section, ensure that there is only one line that reads "1 !GTOPO30 = data/w100n40.dem !     !END!". This is the path to the DEM file.
+\item Subgroup (0b) -- At the end of this section, ensure that there are as many lines as input data files. If using GTOPO30 data, there should be one line that reads "1 !GTOPO30 = data/w100n40.dem !     !END!". If using SRTM3 data, there should be 4 lines that read "1 !SRTM3 = data/n11w086.bil !     !END!", "2 !SRTM3 = data/n11w087.bil !     !END!", etc
 \item LINTXY -- Set to F (false). Receptor point elevations will not be interpolated but be be the peak heights.
 \item XYRADKM -- Set to 5.0. Search radius (km) for locating the peak heights at the receptor points.
 \item LCOAST -- Set to F. We don't have coastline data to process.
@@ -167,9 +120,9 @@ To set up TERREL:
 \item IUTMZN -- Set to 16. This is the UTM zone for Nicaragua.
 \item XREFKM -- Set to 525.09417. This is the x-coordinate of the reference point (lower left corner) of the intended output grid. I think this is an easting (km) relative to the lower left corner of the UTM zone being used.
 \item YREFKM -- Set to 1294.23926. This is the corresponding y-coordinate (northing).
-\item NX -- Set to 91. This is the intended number of grid cells in x.
-\item NY -- Set to 55. This is the intended number of grid cells in y.
-\item DGRIDKM -- Set to 1.0. This is the intended grid spacing (in x and y).
+\item NX -- For a 1km resolution, set to 91; for a 100m resolution, set to 901. This is the intended number of grid cells in x.
+\item NY -- For a 1km resolution, set to 55; for a 100m resolution, set to 541. This is the intended number of grid cells in y.
+\item DGRIDKM -- For a 1km resolution, set to 1.0; for a 100m resolution, set to 0.1. This is the intended grid spacing (in x and y) in km.
 \end{itemize}
 \end{itemize}
 \subsubsection{Run}
@@ -182,6 +135,7 @@ To build the original source code:
 \begin{itemize}
 \item Download and unzip version 7.0.0 (L150211) from \url{http://www.src.com/calpuff/download/mod7_codes.htm}.
 \item Convert all filenames to lowercase using: \texttt{\$ ls | while read upName; do loName=`echo "\${upName}" | tr '[:upper:]' '[:lower:]'`; mv "\$upName" "\$loName"; done}.
+\item If using a 100m resolution, increase mxnx and mxny to 901 and 541 respectively in params.ctg
 \item To get the pgi compilers to work, make the following changes:
 \begin{itemize}
 \item In ctgproc.for, replace the instance of `\textbackslash' with `/'.
@@ -191,7 +145,7 @@ To build the original source code:
 \item In params.ctg, comment out the `Lahey F95 Compiler' block and uncomment the `INTEL Compiler' block.
 \item In control.ctg, add the missing variable `lll' to the /CONTROL/ common block.
 \end{itemize}
-\item Compile using preferred compiler, as described above.
+\item Compile using preferred compiler, as described above, but add -mcmodel=medium (or equivalent of if not using ifort) to avoid memory overflow errors.
 \end{itemize}
 
 \subsubsection{Setup}
@@ -205,14 +159,15 @@ nalulcl20.bil -- The `USGS Land Use/Land Cover' BIL format file for North Americ
 \item LUDAT -- Set to e.g. lulc1km\_masaya.dat. This is the main output file containing the land-use categories on the intended CALPUFF grid.
 \item RUNLST -- Set to e.g. ctgproc\_masaya.lst.
 \item Subgroup (0b) -- At the end of this section, ensure that there is only one line that reads "! GLAZNA  =  data/nalulcl20.bil !  !END!". This is the path to the land-use data file.
-\item MESHGLAZ -- Set to 2. This will split each input grid cell (~1km) into 2x2 grid cells (each assigned the same land-use category). This ensures that there will be no CALPUFF grid cells (also 1km resolution) with missing data in them.
+\item MESHGLAZ -- Set to 2 (1km res) or 11 (100m res). This will e.g. split each 1km input grid cell into 2x2 grid cells (each assigned the same land-use category). This ensures that there will be no 1km-res CALPUFF grid cells with missing data in them.
 \item PMAP -- Set to `UTM'
 \item IUTMZN -- Set to 16
 \item DATUM -- Set to `WGS-84'
 \item XREFKM -- Set to 525.09417
 \item YREFKM -- Set to 1294.23926
-\item NX -- Set to 91
-\item NY -- Set to 55
+\item NX -- Set to 91 (1km res) or 901 (100m res)
+\item NY -- Set to 55 (1km res) or 541 (100m res)
+\item DGRIDKM -- Set to 1.0 (1km res) or 0.1 (100m res)
 \end{itemize}
 \end{itemize}
 
@@ -227,8 +182,9 @@ To build the original source code:
 \begin{itemize}
 \item Download and unzip version 3.2 (L110401) from \url{http://www.src.com/calpuff/download/mod7_codes.htm}.
 \item Convert all filenames to lowercase using: \texttt{\$ ls | while read upName; do loName=`echo "\${upName}" | tr '[:upper:]' '[:lower:]'`; mv "\$upName" "\$loName"; done}.
+\item If using a 100m resolution, increase mxnx and mxny to 901 and 541 respectively in params.geo
 \item In subroutine `comline' (calutils.for), comment out the call to `getcl' and uncomment the Sun compiler block (this seems to work for both the intel and pgi compilers).
-\item Compile using preferred compiler, as described above.
+\item Compile using preferred compiler, as described above, but add -mcmodel=medium (or equivalent of if not using ifort) to avoid
 \item ***Note*** There are a lot of warning messages with the intel compiler regarding a common block in snow.geo, however, the executable is still generated.
 \end{itemize}
 
@@ -251,8 +207,9 @@ To set up MAKEGEO:
 \item IUTMZN -- Set to 16
 \item XREFKM -- Set to 525.09417
 \item YREFKM -- Set to 1294.23926
-\item NX -- Set to 91
-\item NY -- Set to 55
+\item NX -- Set to 91 (1km res) or 901 (100m res)
+\item NY -- Set to 55 (1km res) or 541 (100m res)
+\item DGRIDKM -- Set to 1.0 (1km res) or 0.1 (100m res)
 \item Comment out (i.e. replace all occurrences of `!' with `*') the entries in subgroup 4c and 4e
 \end{itemize}
 \end{itemize}
@@ -262,8 +219,7 @@ To run MAKEGEO, type:\\\\
 \tab \texttt{\$ ./makegeo\_<compiler>.exe}
 
 \subsection{CALETA}
-There is a requirement to switch from using ECMWF GRIB data to open-source prognostic met data. This is because the ECMWF data is only free to academic institutions, and so INETER would not be able to acquire this data going forward. Work is in progress to identify an alternative data source. This will likely also require the creation of a tool to read in this data and convert it to the 3D.dat file format expected by CALMET. This is preferred over developing CALETA itself to perform this task, which is currently only able to work on particular datasets (most of which are specific to US-region-only datasets).\\\\
-For completeness, below is information on how to build, setup and run CALETA for using the ECMWF GRIB files
+We now use open-source NAM data (the ECMWF data is only free to academic institutions, and so INETER would not be able to acquire this data going forward). However, for completeness, below is information on how to build, setup and run CALETA for using the ECMWF GRIB files
 \subsubsection{Build}
 To build the original source code:
 \begin{itemize}
@@ -305,6 +261,7 @@ To build the original source code:
 \begin{itemize}
 \item Download version 6.5.0 (150223) from \url{http://www.src.com/calpuff/download/mod7_codes.htm} and unzip. Create a temporary directory, cd into it, and unzip the second file inside. Copy CALMET.INP from this temporary directory into the main unzipped directory, and then delete the temporary directory.
 \item Convert all filenames to lowercase using: \texttt{\$ ls | while read upName; do loName=`echo "\${upName}" | tr '[:upper:]' '[:lower:]'`; mv "\$upName" "\$loName"; done}.
+\item If using a 100m resolution, increase mxnx and mxny to 901 and 541 respectively in params.met
 \item In params.met, change mxnz from 12 to 27 and mxnzi from 12 to 50.
 \item Compile using preferred compiler, as described above.
 \end{itemize}
@@ -333,8 +290,9 @@ To set up CALMET:
 \item LCALGRD -- Set to F (don't compute special data fields)
 \item IUTMZN -- Set to 16
 \item DATUM -- Set to WGS-84
-\item NX -- Set to 91
-\item NY -- Set to 55
+\item NX -- Set to 91 (1km res) or 901 (100m res)
+\item NY -- Set to 55 (1km res) or 541 (100m res)
+\item DGRIDKM -- Set to 1.0 (1km res) or 0.1 (100m res)
 \item XORIGKM -- Set to 525.09417
 \item YORIGKM -- Set to 1294.23926
 \item NZ -- Set to 24
@@ -373,6 +331,7 @@ To build the original source code:
 \begin{itemize}
 \item Download version 7.2.1 (150618) from \url{http://www.src.com/calpuff/download/mod7_codes.htm} and unzip
 \item Convert all filenames to lowercase using: \texttt{\$ ls | while read upName; do loName=`echo "\${upName}" | tr '[:upper:]' '[:lower:]'`; mv "\$upName" "\$loName"; done}.
+\item If using a 100m resolution, increase mxnx and mxny to 901 and 541 respectively in params.puf
 \item In params.puf, change mxnz from 12 to 27 and mxrec from 10000 to 20000.
 \item In calpuff.for, near the end of subroutine `comp' (e.g. just after the call to FOGOUT), insert the following lines of code to write out the hourly concentrations to individual files:\\
 \begin{lstlisting}
@@ -390,6 +349,7 @@ Also add `character*150 infile' to the declarations of this subroutine.
 \item Build in two stages. For intel compilers:\\
 \tab \texttt{\$ ifort -c modules.for}\\
 \tab \texttt{\$ ifort -O0 -fltconsistency calpuff.for modules.o -o calpuff.exe}
+\tab (Add the flag -mcmodel=medium if running with 100m resolution)
 \end{itemize}
 
 \subsubsection{Setup}
@@ -421,14 +381,15 @@ To set up CALPUFF:
 \item CSPEC -- Delete all but SO2 and SO4 from both the list and the table
 \item IUTMZN -- Set to 16
 \item DATUM -- Set to WGS-84
-\item NX -- Set to 91
-\item NY -- Set to 55
+\item NX -- Set to 91 (1km res) or 901 (100m res)
+\item NY -- Set to 55 (1km res) or 541 (100m res)
+\item DGRIDKM -- Set to 1.0 (1km res) or 0.1 (100m res)
 \item NZ -- Set to 24
 \item ZFACE -- Set to "0,20,60,140,260,540,1000,2000,3000,4000,5000,6000,7000, 8000,9000,10000,11000,12000,13000,14000,15000,16000,17000,18000,19000"
 \item XORIGKM -- Set to 525.09417
 \item YORIGKM -- Set to 1294.23926
-\item IECOMP -- Set to 91 (X index of UR corner)
-\item JECOMP -- Set to 55 (J index of UR corner)
+\item IECOMP -- Set to 91 (1km res) or 901 (100m res) (X index of UR corner)
+\item JECOMP -- Set to 55 (1km res) or 541 (100m res) (J index of UR corner)
 \item LSAMP -- Set to F (no gridded receptors)
 \item IDRY -- Set to 0 (no dry fluxes output)
 \item IWET -- Set to 0 (no wet fluxes output)
@@ -486,27 +447,5 @@ To set up CALPUFF:
 To run CALMET, type:\\
 \tab \texttt{\$ ./calpuff\_<compiler>.exe}\\\\
 Modify calpuff.inp so the the restart flag (RESTARTB) is set to 0 and run again.
-
-\section{Forecasting System - Leeds}
-This section describes the processes and file/directory structure behind the automated forecasting system, as run at Leeds.\\\\
-The root directory is called `UNRESPForecastingSystem' and is under version control on GitHub (\url{https://github.com/cemac-tech/UNRESPForecastingSystem.git}). The file/directory structure below this is described below:
-\begin{itemize}
-\item Run.sh -- The main shell script that runs the entire forecasting system
-\item CALPUFF\_SRC/ -- Fortran source code for the various parts of the CALPUFF modelling system (as listed below). This source data corresponds to Version 7 of the CALPUFF system (downloadable from here: \url{http://www.src.com/calpuff/download/mod7_codes.htm}), with a few minimal code changes required to allow the model to be built on a Linux system with Intel compilers; these changes are described in section \ref{Installation}.
-\begin{itemize}
-\item /TERREL -- Combines and grids terrain data
-\item /CTGPROC -- Processes and grids land use data
-\item /MAKEGEO -- Merges land use and terrain data to produce the geophysical data file for CALMET
-\end{itemize}
-\item CALPUFF\_INP/ -- Control files for the various elements of the CALPUFF system. All parameters that have been modified from those in the original downloaded file are described in \ref{Installation}.
-\item CALPUFF\_EXE/ -- Executables for the various elements of the CALPUFF system.
-\item data/ -- Various input data files to the CALPUFF system, as described below:
-\begin{itemize}
-\item w100n40.dem -- The (renamed) DEM data file for Central America from the GTOPO30 dataset (downloaded via \url{http://www.src.com/calpuff/data/terrain.html}).
-\item nalulcl20.bil -- The `USGS Land Use/Land Cover' file for North America (downloaded via \url{http://www.src.com/calpuff/data/land_use.html}).
-\item TERREL and CTGPROC output (.dat) files as input to MAKEGEO (copied into directory during runtime)
-\end{itemize}
-\end{itemize}
-
 
 \end{document}
