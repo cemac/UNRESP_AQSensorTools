@@ -1,5 +1,10 @@
 #Ignore...
 
+#All files with these extensions:
+*.directory
+*.pyc
+*.log
+
 #All these specific directories:
 Python/1733150_ElPanama/
 
