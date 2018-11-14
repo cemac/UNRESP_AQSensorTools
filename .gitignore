@@ -1,0 +1,8 @@
+#Ignore...
+
+#All these specific directories:
+Python/1733150_ElPanama/
+
+#All these specific files:
+Python/AQMeshCodes.txt
+Python/*.html
