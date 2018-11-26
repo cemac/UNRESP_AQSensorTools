@@ -6,8 +6,8 @@
 *.log
 
 #All these specific directories:
-Python/1733150_ElPanama/
+data/
 
 #All these specific files:
-Python/AQMeshCodes.txt
-Python/*.html
+aqtools/AQMeshCodes.txt
+aqtools/AppSecretKey.txt
