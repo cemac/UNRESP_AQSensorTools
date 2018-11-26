@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Script name: getAQMeshData.py
-Author: JO'N
+Author: JO'N/ CEMAC (University of Leeds)
 Date: March 2018
 Purpose: Download data from an AQMesh pod using the API tool
 Usage: ./getAQMeshData.py <stationID> <startDate> <endDate> <variables> <outFreq>
@@ -13,53 +13,48 @@ Usage: ./getAQMeshData.py <stationID> <startDate> <endDate> <variables> <outFreq
 Output: One or multiple csv data files (depending on chosen output frequency) with naming convention: AQMeshData_[stationID]_[dateRange]_[variables].csv
 """
 
-def main(stationID,startDate,endDate,variables,outFreq):
-    
-    import pandas as pd
-    from pandas.io.json import json_normalize
-    import json
-    import requests
-    from dateutil.parser import parse
-    import pytz
-    import datetime as dt
-    import os
-    
+import pandas as pd
+from pandas.io.json import json_normalize
+import json
+import requests
+from dateutil.parser import parse
+import pytz
+import datetime as dt
+import os
+
+
+def main(stationID, startDate, endDate, variables, outFreq):
+
     pyDir = os.path.dirname(os.path.realpath(__file__))
-    
-    #####PARAMETERS
-    allFreqs=['all','daily','monthly']
-    allVars=['AIRPRES', 'HUM', 'NO', 'NO2', 'O3', 'PARTICULE_COUNT', 'PM1', 'PM10', 'PM2.5', 'PMTOTAL', 'SO2', 'TEMP', 'VOLTAGE']
-    colOrder=['TBTimestamp','TETimestamp','SensorLabel','SensorName','PreScaled','Slope','Offset','Scaled','UnitName','Status']
-    #####
-    
-    #####READ IN ACCOUNT INFO
-    codesFile = os.path.join(pyDir,'AQMeshCodes.txt')
+
+    # PARAMETERS
+    allFreqs = ['all', 'daily', 'monthly']
+    allVars = ['AIRPRES', 'HUM', 'NO', 'NO2', 'O3', 'PARTICULE_COUNT', 'PM1',
+               'PM10', 'PM2.5', 'PMTOTAL', 'SO2', 'TEMP', 'VOLTAGE']
+    colOrder = ['TBTimestamp', 'TETimestamp', 'SensorLabel', 'SensorName',
+                'PreScaled', 'Slope', 'Offset', 'Scaled', 'UnitName', 'Status']
+    # READ IN ACCOUNT INFO
+    codesFile = os.path.join(pyDir, 'AQMeshCodes.txt')
     assert os.path.exists(codesFile), "Can't find file AQMeshCodes.txt in same directory as python script"
-    f=open(codesFile,'r')
-    lines=f.readlines()
+    f = open(codesFile, 'r')
+    lines = f.readlines()
     f.close()
-    assert len(lines)==3, "AQMeshCodes.txt should contain exactly 3 lines: A comment line, Account ID, Licence Key"
-    accountID=lines[1].strip()
-    licenceKey=lines[2].strip()
-    #####
-    
-    #####CHECK VARIABLES
-    if variables=='ALL':
+    assert len(lines) == 3, "AQMeshCodes.txt should contain exactly 3 lines: A comment line, Account ID, Licence Key"
+    accountID = lines[1].strip()
+    licenceKey = lines[2].strip()
+    # CHECK VARIABLES
+    if variables == 'ALL':
         vars = allVars
-        varStr='AllVars'
+        varStr = 'AllVars'
     else:
         vars = [s for s in variables.split()]
         for v in vars:
             assert v in allVars, "Variable name '"+v+"' not valid. Full list of available variables: "+str(allVars)
         varStr='-'.join(vars)
-    #####
-    
-    #####CHECK OUTPUT FREQUENCY
+    # CHECK OUTPUT FREQUENCY
     assert outFreq in allFreqs, "Output frequency '"+outFreq+"' not valid. List of available options: "+str(allFreqs)
-    #####
-    
-    #####GET VALID TIME RANGE AND CHECK START/END DATES
-    #API documentation here: https://api.airmonitors.net/3.5/documentation?key=D73341AM
+    # GET VALID TIME RANGE AND CHECK START/END DATES
+    # API documentation here: https://api.airmonitors.net/3.5/documentation?key=D73341AM
     try:
         url = "https://api.airmonitors.net/3.5/GET/"+accountID+"/"+licenceKey+"/stationdata/Period/"+stationID
         rawText = requests.get(url=url)
@@ -89,7 +84,7 @@ def main(stationID,startDate,endDate,variables,outFreq):
     assert (validEnd-end).seconds >= 0, "The end date/time must come before "+str(validEnd)
     assert (end-start).seconds >= 0, "The start date/time must come before the end date/time"
     #####
-    
+
     #####SPLIT TIME RANGE INTO DAYS FOR DOWNLOAD
     startDay = dt.datetime(start.year,start.month,start.day,tzinfo=pytz.UTC)
     nextDay = startDay + dt.timedelta(days=1)
