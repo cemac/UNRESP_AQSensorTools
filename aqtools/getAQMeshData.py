@@ -147,19 +147,18 @@ def main(stationID, startDate, endDate, variables, outFreq):
 
 
 if __name__ == '__main__':
-    #####READ IN COMMAND LINE ARGUMENTS
+    # READ IN COMMAND LINE ARGUMENTS
     import argparse
     parser = argparse.ArgumentParser(description="Script to download data from an AQMesh pod using the API tool",\
        epilog="Example of use: ./getAQMeshData.py 1733150 2018-01-01T00:00:00 2018-01-31T23:59:59 'SO2 NO2' daily")
-    parser.add_argument("stationID",help="Unique ID of the AQMesh station from which you want to download data, e.g. 1733150 for El Panama",type=str)
-    parser.add_argument("startDate",help="Start date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2018-01-01T00:00:00. Or type 'start' to get data from the earliest possible time.",type=str)
-    parser.add_argument("endDate",help="End date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2018-01-31T23:59:59. Or type 'end' to get data up to the latest possible time.",type=str)
-    parser.add_argument("variables",help="List of variables to download, in single quotes separated by spaces, e.g. 'NO PM10 SO2'. Or specify 'ALL'\
+    parser.add_argument("stationID", help="Unique ID of the AQMesh station from which you want to download data, e.g. 1733150 for El Panama", type=str)
+    parser.add_argument("startDate", help="Start date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2018-01-01T00:00:00. Or type 'start' to get data from the earliest possible time.",type=str)
+    parser.add_argument("endDate", help="End date/time (UTC) of data to download, in format YYYY-MM-DDTHH:MM:SS, e.g. 2018-01-31T23:59:59. Or type 'end' to get data up to the latest possible time.",type=str)
+    parser.add_argument("variables", help="List of variables to download, in single quotes separated by spaces, e.g. 'NO PM10 SO2'. Or specify 'ALL'\
     to download all variables. Full list of available variables: AIRPRES, HUM, NO, NO2, O3, PARTICULE_COUNT, PM1, PM10, PM2.5, PMTOTAL, SO2,\
       TEMP, VOLTAGE",type=str)
     parser.add_argument("outFreq",help="Frequency of output files. Type 'all' to generate one output file containing all data,\
      'daily' to generate one output file per calendar day, or 'monthly' to generate one output file per calendar month",type=str)
     args = parser.parse_args()
-    #####CALL MAIN ROUTINE
+    # CALL MAIN ROUTINE
     main(args.stationID,args.startDate,args.endDate,args.variables,args.outFreq)
-    ####
