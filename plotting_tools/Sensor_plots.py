@@ -19,67 +19,72 @@ import glob
 import matplotlib.pyplot as plt
 
 
-example = pd.read_csv('../data/AQMeshData_1733150_2018-10-23_SO2-NO2.csv')
-allSO2 = pd.DataFrame(columns=example.columns)
-allNO2 = pd.DataFrame(columns=example.columns)
-pname = '/nfs/earcemac/projects/unresp/ForecastVisualized/UNRESP_AQSensorTools/data/*'
+pname = '../data/*'
 for rw in glob.iglob(pname):
     day_data = pd.read_csv(rw)
-    NO2 = day_data[day_data.SensorLabel=='NO2']
-    SO2 = day_data[day_data.SensorLabel!='NO2']
-    NO2_valid=NO2[NO2.Status == 'Valid']
-    SO2_valid=SO2[SO2.Status == 'Valid']
+    NO2 = day_data[day_data.SensorLabel == 'NO2']
+    SO2 = day_data[day_data.SensorLabel != 'NO2']
+    NO2_valid = NO2[NO2.Status == 'Valid']
+    SO2_valid = SO2[SO2.Status == 'Valid']
     allSO2 = pd.concat([allSO2, SO2_valid]).reset_index(drop=True)
     allNO2 = pd.concat([allNO2, NO2_valid]).reset_index(drop=True)
-    
+
 allNO2['TBTimestamp'] = pd.to_datetime(allNO2['TBTimestamp'])
 allSO2['TBTimestamp'] = pd.to_datetime(allSO2['TBTimestamp'])
 
 # plot whole dataset
-plt.figure(figsize=(100,8))    
+plt.figure(figsize=(100, 8))
 ax = plt.gca()
-allSO2.plot.line(x='TBTimestamp', y='Scaled', color='red', ax=ax)
-allNO2.plot.line(x='TBTimestamp', y='Scaled', secondary_y=True, ax=ax)
-plt.savefig('2018.png')
-plt.figure(figsize=(100,8))    
-ax = plt.gca()
-allSO2.plot.line(x='TBTimestamp', y='Scaled', color='red', ax=ax)
-plt.savefig('SO22018.png')
-plt.figure(figsize=(20,8))    
-ax = plt.gca()
+ax.set_title('../plots/NO2 2018', fontsize=18)
 allNO2.plot.line(x='TBTimestamp', y='Scaled', ax=ax)
 plt.savefig('NO22018.png')
-
-# plot first working period jan to april
-plt.figure(figsize=(20,8)) 
-mask = (allNO2['TBTimestamp'] > '2018-01-01 00:00:00') & (allNO2['TBTimestamp'] <= '2018-04-01 00:00:00')
-J2ANO2 = allNO2.loc[mask]
+plt.figure(figsize=(100, 8))
 ax = plt.gca()
-J2ANO2.plot.line(x='TBTimestamp', y='Scaled', ax=ax)
-plt.savefig('J2A_NO22018.png')
+allSO2.plot.line(x='TBTimestamp', y='Scaled', color='red', ax=ax)
+plt.savefig('../plots/SO22018.png')
 
 
-# plot first working period jan to april
-plt.figure(figsize=(20,8)) 
-mask = (allNO2['TBTimestamp'] > '2018-04-01 00:00:00') & (allNO2['TBTimestamp'] <= '2018-06-10 00:00:00')
-A2JNO2 = allNO2.loc[mask]
-ax = plt.gca()
-A2JNO2.plot.line(x='TBTimestamp', y='Scaled', ax=ax)
-plt.savefig('A2J_NO22018.png')
+def plotterNO2(time_p, T1, T2):
+    plt.figure(figsize=(15, 8))
+    mask = ((allNO2['TBTimestamp'] > T1) &
+            (allNO2['TBTimestamp'] <= T2))
+    TPNO2 = allNO2.loc[mask]
+    ax = plt.gca()
+    ax.set_title('NO$_{2}$ ' + time_p + ' 2018', fontsize=24)
+    ax.set_ylabel(' (ppb) ', fontsize=20)
+    TPNO2.plot.line(x='TBTimestamp', y='Scaled', ax=ax)
+    ax.tick_params(axis='both', which='major', labelsize=18)
+    ax.legend(['NO$_2$'], fontsize=18)
+    # Remove axis label
+    ax1 = plt.axes()
+    ax1.xaxis.label.set_visible(False)
+    plt.savefig('../plots/NO2' + time_p + '.png')
 
-# plot first working period Aug to Oct
-plt.figure(figsize=(20,8)) 
-mask = (allNO2['TBTimestamp'] > '2018-08-01 00:00:00') & (allNO2['TBTimestamp'] <= '2018-10-12 00:00:00')
-A2ONO2 = allNO2.loc[mask]
-ax = plt.gca()
-A2ONO2.plot.line(x='TBTimestamp', y='Scaled', ax=ax)
-plt.savefig('A2O_NO22018.png')
+
+def plotterSO2(time_p, T1, T2):
+    plt.figure(figsize=(15, 8))
+    mask = ((allSO2['TBTimestamp'] > T1) &
+            (allSO2['TBTimestamp'] <= T2))
+    TPSO2 = allSO2.loc[mask]
+    ax = plt.gca()
+    ax.set_title('SO$_{2}$ ' + time_p + ' 2018', fontsize=24)
+    ax.set_ylabel(' (ppb) ', fontsize=20)
+    TPSO2.plot.line(x='TBTimestamp', y='Scaled', ax=ax)
+    ax.tick_params(axis='both', which='major', labelsize=18)
+    ax.legend(['SO$_2$'], fontsize=18)
+    # Remove axis label
+    ax1 = plt.axes()
+    ax1.xaxis.label.set_visible(False)
+    plt.savefig('../plots/SO2' + time_p + '.png')
 
 
-# plot first working period Aug to Oct
-plt.figure(figsize=(20,8)) 
-mask = (allNO2['TBTimestamp'] > '2018-10-18 00:00:00') & (allNO2['TBTimestamp'] <= '2018-11-20 00:00:00')
-RNO2 = allNO2.loc[mask]
-ax = plt.gca()
-RNO2.plot.line(x='TBTimestamp', y='Scaled', ax=ax)
-plt.savefig('recent_NO22018.png')
+T1s = ['2018-01-01 00:00:00', '2018-04-01 00:00:00',
+       '2018-08-01 00:00:00', '2018-10-18 00:00:00']
+T2s = ['2018-04-01 00:00:00', '2018-06-10 00:00:00',
+       '2018-10-12 00:00:00', '2018-11-20 00:00:00']
+
+TP = ['Jan2Apr', 'Apr2Jun', 'Jul2Oct', 'Recent']
+
+for i in range(len(T1s)):
+    plotterNO2(TP[i], T1s[i], T2s[i])
+    plotterSO2(TP[i], T1s[i], T2s[i])
