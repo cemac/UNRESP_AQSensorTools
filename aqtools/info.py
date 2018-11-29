@@ -37,7 +37,8 @@ codecheck = ("AQMeshCodes.txt should contain exactly 3 lines:\n" +
 assert len(lines) == 3, codecheck
 accountID = lines[1].strip()
 licenceKey = lines[2].strip()
-print("API documentation here: " +
+print('Genertating information.csv')
+print("Further API documentation here: " +
       "https://api.airmonitors.net/3.5/documentation?key=D73341AM")
 
 try:
