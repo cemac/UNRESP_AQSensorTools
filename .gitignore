@@ -12,3 +12,4 @@ plots/
 #All these specific files:
 aqtools/AQMeshCodes.txt
 aqtools/AppSecretKey.txt
+aqtools/*.csv
