@@ -13,3 +13,4 @@ plots/
 aqtools/AQMeshCodes.txt
 aqtools/AppSecretKey.txt
 aqtools/*.csv
+aqtools/collect_alldata.sh

@@ -21,7 +21,6 @@ Fetches all SO2 and NO2 data from Jan 2018 from the El Panama AQMesh pod station
 ## Usage ##
 
 1. **Retrieve data** (aqtools)
-
   **NB** requires Licence key not stored in Repository
   * To find out station information such as co-ordinates run:
   `.\info.py`
@@ -37,8 +36,8 @@ Fetches all SO2 and NO2 data from Jan 2018 from the El Panama AQMesh pod station
   ```
   This relies on a directory called '1733150_ElPanama' existing within the same directory as the above shell and python scripts.
 
-2. Plotting Sensor data (plotting_tools)
-  * `Sensor_plots.py` plotting all data *in development*
+2. **Plotting Sensor data** (plotting_tools)
+    * `Sensor_plots.py` plotting all data *in development*
 
 
 ## Licence information ##
