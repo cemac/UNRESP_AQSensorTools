@@ -21,9 +21,9 @@ from matplotlib.dates import DateFormatter
 from pytz import timezone
 from datetime import datetime
 
-SName = 'ElPanama', 'SanJuan', 'StationA', 'StationB'
+SName = ["SanJu1", "ElCrucero", "SanJuan2", "785150", "Pacaya", "Rigoberto",
+         "861150", "Met", "ElPanama"]
 myFmt = DateFormatter("%b")
-# SName = 'ElPanama', 'ElCucero', 'SanJuan', 'StationA', 'StationB'
 for StationName in SName:
     # Format the data
     #try:
