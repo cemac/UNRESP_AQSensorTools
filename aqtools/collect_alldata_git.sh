@@ -23,13 +23,13 @@ for i in ${!stationnames[*]};
     echo "./getAQMeshData.py ${stationIDs[$i]} 2017-01-01T00:00:00 $now 'SO2 NO2' all"
     ./getAQMeshData.py ${stationIDs[$i]} 2017-01-01T00:00:00 $now 'SO2 NO2' all
     # If there was any data create a folder and put it there!
-    if [ ! -e $DATAPATH$FNAME ];
+    if [ ! -e $DATAPATH$fname ];
     then
-      mkdir $DATAPATH$FNAME
+      mkdir $DATAPATH$fname
     fi
     files=( AQ*.csv )
     if [ -e $files ];
     then
-      mv $files $DATAPATH$FNAME
+      mv $files $DATAPATH$fname
     fi
 done
