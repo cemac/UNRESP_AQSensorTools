@@ -20,8 +20,8 @@ for i in ${!stationnames[*]};
     fname=${stationnames[$i]}
     echo "Retriving ${stationnames[$i]} data"
     echo "running"
-    echo "./getAQMeshData.py ${stationIDs[$i]} 2018-01-01T00:00:00 $now 'SO2 NO2' all"
-    ./getAQMeshData.py ${stationIDs[$i]} 2018-01-01T00:00:00 $now 'SO2 NO2' all
+    echo "./getAQMeshData.py ${stationIDs[$i]} 2017-01-01T00:00:00 $now 'SO2 NO2' all"
+    ./getAQMeshData.py ${stationIDs[$i]} 2017-01-01T00:00:00 $now 'SO2 NO2' all
     # If there was any data create a folder and put it there!
     if [ ! -e $DATAPATH$FNAME ];
     then
