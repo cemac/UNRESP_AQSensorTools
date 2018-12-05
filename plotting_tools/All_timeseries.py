@@ -25,9 +25,7 @@ SName = ["SanJu1", "ElCrucero", "SanJuan2", "785150", "Pacaya", "Rigoberto",
          "861150", "Met", "ElPanama"]
 myFmt = DateFormatter("%Y %b ")
 for StationName in SName:
-    example = pd.read_csv('../data/ElPanama/AQMeshData_1733150_2018-01-01T00' +
-                          '-00-00_to_2018-12-03T09-59-10_SO2-NO2.csv')
-    pname = '../data/' + StationName + '/AQMeshData*.csv'
+    pname = '../data/' + StationName + '/AQMeshData*_2016*.csv'
     for rw in glob.iglob(pname):
         day_data = pd.read_csv(rw)
         NO2 = day_data[day_data.SensorLabel == 'NO2']
@@ -36,20 +34,20 @@ for StationName in SName:
         SO2_valid = SO2[SO2.Status == 'Valid']
         allSO2 = SO2_valid.reset_index(drop=True)
         allNO2 = NO2_valid.reset_index(drop=True)
-
     allNO2['TBTimestamp'] = pd.to_datetime(allNO2['TBTimestamp'])
     allSO2['TBTimestamp'] = pd.to_datetime(allSO2['TBTimestamp'])
     allNO2['TBTimestamp'].apply(lambda x: datetime.replace(x, tzinfo=None))
     allSO2['TBTimestamp'].apply(lambda x: datetime.replace(x, tzinfo=None))
     allNO2['date'] = allNO2['TBTimestamp'].apply(lambda x: x.strftime("%Y %b"))
     allSO2['date'] = allSO2['TBTimestamp'].apply(lambda x: x.strftime("%Y %b"))
-    print('../data/' + StationName + '/allSO2.csv')
     allSO2.to_csv('../data/' + StationName + '/allSO2.csv', sep=',')
     allNO2.to_csv('../data/' + StationName + '/allNO2.csv', sep=',')
 
     # plot whole dataset
-    T1 = datetime(2018, 1, 1, 0, 0, 0).replace(tzinfo=None)
-    T2 = datetime(2018, 12, 1, 0, 0, 0).replace(tzinfo=None)
+    Y1 = max(allNO2.TBTimestamp).year
+    Y2 = min(allNO2.TBTimestamp).year
+    T1 = datetime(Y1, 1, 1, 0, 0, 0).replace(tzinfo=None)
+    T2 = datetime(Y2, 12, 1, 0, 0, 0).replace(tzinfo=None)
     plt.figure(figsize=(100, 8))
     ax = plt.gca()
     ax.set_title(r'NO$_2$ 2018', fontsize=48)
@@ -59,15 +57,14 @@ for StationName in SName:
         ax.tick_params(axis='both', which='major', labelsize=48)
         ax.xaxis.set_major_formatter(myFmt)
         ax.xaxis_date()
-        plt.savefig('../plots/' + StationName + '/NO22018.png')
+        plt.savefig('../plots/' + StationName + '/NO22017.png')
+    if not allSO2.empty:
         plt.figure(figsize=(100, 8))
         ax = plt.gca()
-    if allSO2.empty:
-        continue
-    ax.set_title(r'SO$_2$ 2018', fontsize=48)
-    allSO2.plot.line(x='TBTimestamp', y='Scaled', color='red', ax=ax)
-    ax.set_xlim([T1, T2])
-    ax.tick_params(axis='both', which='major', labelsize=48)
-    ax.xaxis.set_major_formatter(myFmt)
-    ax.xaxis_date()
-    plt.savefig('../plots/' + StationName + '/SO22018.png')
+        ax.set_title(r'SO$_2$ 2018', fontsize=48)
+        allSO2.plot.line(x='TBTimestamp', y='Scaled', color='red', ax=ax)
+        ax.set_xlim([T1, T2])
+        ax.tick_params(axis='both', which='major', labelsize=48)
+        ax.xaxis.set_major_formatter(myFmt)
+        ax.xaxis_date()
+        plt.savefig('../plots/' + StationName + '/SO22017.png')

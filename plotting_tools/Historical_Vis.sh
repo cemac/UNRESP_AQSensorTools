@@ -1,3 +1,4 @@
+#!/usr/bin/bash
 cwd=$(pwd)
 stationnames=("SanJu1" "ElCrucero" "SanJuan2" "785150" "Pacaya" "Rigoberto" "861150" "Met" "ElPanama")
 VIZPATH=~/public_html/UNRESP/UNRESP_VIZ/AQSensor/
@@ -12,8 +13,8 @@ for i in ${!stationnames[*]};
       mkdir $VIZPATH$fname
     fi
     fileroot=~/UNRESP_AQtools/data/$fname
-    files=/all*2018.png
-    cp -p fileroot$files $VIZPATH$fname
+    files=${'/all*2018.png'}
+    cp -p $fileroot$files $VIZPATH$fname
     cd $VIZPATH$fname
     setfacl -m other:r-x *
     chmod og+rx *

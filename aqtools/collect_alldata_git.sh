@@ -13,7 +13,7 @@ DATAPATH='../data/'
 now=$(date +"%Y-%m-%dT%T")
 # All stations and IDS
 stationnames=("San_Ju" "El_Crucero" "San_Juan" "station_****" "Pacaya Rigoberto" "station_*****" "El_Panama")
-stationIDs=("****" "****" "****" "*****" "*****" "***" "*****" "****")
+stationIDs=("****" "****" "*****" "*****" "*****" "*****" "*****" "*****")
 # For each station run getAQ with corresponding ID
 for i in ${!stationnames[*]};
   do
