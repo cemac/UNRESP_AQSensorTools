@@ -4,6 +4,9 @@
 *.directory
 *.pyc
 *.log
+*.dat
+*.nc
+*.grib2
 
 #All these specific directories:
 data/
