@@ -69,9 +69,12 @@ def plotdata(StationName, month=1, year=2016, ymax=100,
         ax.xaxis_date()
         ax.set_xlabel(T1.strftime('%b %Y'), fontsize=48)
         ax.get_legend().remove()
-        plt.tight_layout()
-        plt.savefig('../plots/' + str(StationName) + '/' + var1 +
-                    str(T1.strftime('%b_%Y')) + '.png')
+        try:
+            plt.tight_layout()
+            plt.savefig('../plots/' + str(StationName) + '/' + var1 +
+                        str(T1.strftime('%b_%Y')) + '.png')
+        except ValueError:
+            pass
         plt.close()
     if var2 is None:
         return
@@ -89,11 +92,14 @@ def plotdata(StationName, month=1, year=2016, ymax=100,
         ax.xaxis_date()
         ax.set_xlabel(T1.strftime('%b %Y'), fontsize=48)
         ax.get_legend().remove()
-        plt.tight_layout()
-        date = T1.strftime('%b_%Y')
-        print(date)
-        plt.savefig('../plots/' + str(StationName) + '/' + var2 +
-                    str(date) + '.png')
+        try:
+            plt.tight_layout()
+            date = T1.strftime('%b_%Y')
+            print(date)
+            plt.savefig('../plots/' + str(StationName) + '/' + var2 +
+                        str(date) + '.png')
+        except ValueError:
+            pass
         plt.close()
 
     if not var1df.empty:
@@ -121,8 +127,11 @@ def plotdata(StationName, month=1, year=2016, ymax=100,
         ax2.get_legend().remove()
         ax.get_legend().remove()
         date = T1.strftime('%b_%Y')
-        plt.savefig('../plots/' + str(StationName) + '/' + var1 + var2 +
+        try:
+            plt.savefig('../plots/' + str(StationName) + '/' + var1 + var2 +
                     date + '.png')
+        except ValueError:
+            pass
         plt.close()
     return
 
